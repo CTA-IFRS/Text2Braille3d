@@ -661,8 +661,8 @@ OpenJsCad.Processor = function(containerdiv, onchange) {
   this.viewerdiv = null;
   this.viewer = null;
   this.zoomControl = null;
-  this.viewerwidth = 800;
-  this.viewerheight = 600;
+  this.viewerwidth = 644;
+  this.viewerheight = 671;
   this.initialViewerDistance = 200;
   this.processing = false;
   this.currentObject = null;
@@ -711,12 +711,16 @@ OpenJsCad.Processor.prototype = {
       this.containerdiv.appendChild(div);
     }
 */    
+    var rightDiv = document.createElement("div");
+    rightDiv.className = "rightDiv shadow";
+    this.containerdiv.appendChild(rightDiv);
+    this.rightDiv = rightDiv;
     var viewerdiv = document.createElement("div");
     viewerdiv.className = "viewer";
     viewerdiv.style.width = this.viewerwidth + "px";
     viewerdiv.style.height = this.viewerheight + "px";
     viewerdiv.style.backgroundColor = "rgb(200,200,200)";
-    this.containerdiv.appendChild(viewerdiv);
+    this.rightDiv.appendChild(viewerdiv);
     this.viewerdiv = viewerdiv;
     try
     {
@@ -757,7 +761,7 @@ OpenJsCad.Processor.prototype = {
         (this.zoomControl.scrollWidth - this.zoomControl.offsetWidth);
     }
 
-    this.containerdiv.appendChild(this.zoomControl);
+    this.rightDiv.appendChild(this.zoomControl);
     //end of zoom control
 
     this.errordiv = document.createElement("div");
@@ -765,14 +769,16 @@ OpenJsCad.Processor.prototype = {
     this.errordiv.appendChild(this.errorpre);
     this.statusdiv = document.createElement("div");
     this.statusdiv.className = "statusdiv";
-    //this.statusdiv.style.width = this.viewerwidth + "px";
+    this.statusdiv.style.width = this.viewerwidth + "px";
     this.statusspan = document.createElement("span");
+    this.statusspan.className = "base-text";
     this.statusbuttons = document.createElement("div");
-    this.statusbuttons.style.float = "right";
+    //this.statusbuttons.style.float = "right";
     this.statusdiv.appendChild(this.statusspan);
     this.statusdiv.appendChild(this.statusbuttons);
     this.abortbutton = document.createElement("button");
     this.abortbutton.innerHTML = "Cancelar";
+    this.abortbutton.className = "btn btn-outline btn-gray";
     this.abortbutton.onclick = function(e) {
       that.abort();
     };
@@ -802,20 +808,33 @@ OpenJsCad.Processor.prototype = {
     this.parametersdiv.className = "parametersdiv";
     var headerdiv = document.createElement("div");
     headerdiv.innerText = "Parâmetros:";
-    headerdiv.className = "header";
+    headerdiv.className = "header h4";
     this.parametersdiv.appendChild(headerdiv);
     this.parameterstable = document.createElement("table");
     this.parameterstable.className = "parameterstable";
     this.parametersdiv.appendChild(this.parameterstable);
+    var parametersButtonsDiv = document.createElement("div");
+    parametersButtonsDiv.className = "parametersButtonsDiv";
+    this.parametersdiv.appendChild(parametersButtonsDiv);
+    this.parametersButtonsDiv = parametersButtonsDiv;
     var parseParametersButton = document.createElement("button");
+    parseParametersButton.className = "parseParametersButton btn btn-outline";
     parseParametersButton.innerHTML = "Update";
     parseParametersButton.onclick = function(e) {
       that.rebuildSolid();
     };
-    this.parametersdiv.appendChild(parseParametersButton);
+    var resetParametersButton = document.createElement("button");
+    resetParametersButton.className = "resetParametersButton btn btn-outline btn-gray";
+    resetParametersButton.innerHTML = "Reset";
+    resetParametersButton.onclick = function(e) {
+      //tem que fazer
+      console.log("Limpar parâmetros")
+    };
+    this.parametersButtonsDiv.appendChild(resetParametersButton);
+    this.parametersButtonsDiv.appendChild(parseParametersButton);
     this.enableItems();    
-    this.containerdiv.appendChild(this.statusdiv);
-    this.containerdiv.appendChild(this.errordiv);
+    this.rightDiv.appendChild(this.statusdiv);
+    this.rightDiv.appendChild(this.errordiv);
     this.containerdiv.appendChild(this.parametersdiv);
     this.clearViewer();
   },
@@ -915,7 +934,8 @@ OpenJsCad.Processor.prototype = {
       that.formatDropdown.options.add(option);
     });
     
-    this.updateDownloadLink();
+    //this.updateDownloadLink();
+    this.generateOutputFileBlobUrl();
   },
   
   selectedFormat: function() {
@@ -943,6 +963,7 @@ OpenJsCad.Processor.prototype = {
     {
       //todo: abort
       this.processing=false;
+      this.aborted = true;
       this.statusspan.innerHTML = "Abortado.";
       this.worker.terminate();
       this.enableItems();
@@ -954,10 +975,11 @@ OpenJsCad.Processor.prototype = {
     this.abortbutton.style.display = this.processing? "inline":"none";
     this.formatDropdown.style.display = ((!this.hasOutputFile)&&(this.hasValidCurrentObject))? "inline":"none";
     this.generateOutputFileButton.style.display = ((!this.hasOutputFile)&&(this.hasValidCurrentObject))? "inline":"none";
-    this.downloadOutputFileLink.style.display = this.hasOutputFile? "inline":"none";
+    //this.downloadOutputFileLink.style.display = this.hasOutputFile? "inline":"none";
+    this.downloadOutputFileLink.style.display = (!this.processing && !this.aborted && this.hasOutputFile) ? "flex" : "none";
     this.parametersdiv.style.display = (this.paramControls.length > 0)? "block":"none";
     this.errordiv.style.display = this.hasError? "block":"none";
-    this.statusdiv.style.display = this.hasError? "none":"block";    
+    this.statusdiv.style.display = this.hasError? "none":"flex";    
   },
 
   setOpenJsCadPath: function(path) {
@@ -1189,9 +1211,10 @@ OpenJsCad.Processor.prototype = {
   
   supportedFormatsForCurrentObject: function() {
     if (this.currentObject instanceof CSG) {
-      return ["stl", "x3d"];
-    } else if (this.currentObject instanceof CAG) {
-      return ["dxf"];
+      return ["stl"];
+      //return ["stl", "x3d"];
+    //} else if (this.currentObject instanceof CAG) {
+      //return ["dxf"];
     } else {
       throw new Error("Not supported");
     }
@@ -1203,7 +1226,7 @@ OpenJsCad.Processor.prototype = {
         displayName: "STL",
         extension: "stl",
         mimetype: "application/sla",
-        },
+        }/*,
       x3d: {
         displayName: "X3D",
         extension: "x3d",
@@ -1213,13 +1236,13 @@ OpenJsCad.Processor.prototype = {
         displayName: "DXF",
         extension: "dxf",
         mimetype: "application/dxf",
-        }
+        }*/
     }[format];
   },
 
   downloadLinkTextForCurrentObject: function() {
     var ext = this.selectedFormatInfo().extension;
-    return "Download "+ext.toUpperCase();
+    return "Exportar "+ext.toUpperCase()+` <i class="bi bi-download" style="font-size: 19px;margin-left: 8px;"></i>`;
   },
 
   generateOutputFileBlobUrl: function() {
@@ -1229,6 +1252,7 @@ OpenJsCad.Processor.prototype = {
     if(!this.outputFileBlobUrl) throw new Error("createObjectURL() failed"); 
     this.hasOutputFile = true;
     this.downloadOutputFileLink.href = this.outputFileBlobUrl;
+    this.downloadOutputFileLink.className = "btn btn-primary btnDownload";
     this.downloadOutputFileLink.innerHTML = this.downloadLinkTextForCurrentObject();
     var ext = this.selectedFormatInfo().extension;
     this.downloadOutputFileLink.setAttribute("download", "openjscad."+ext);
@@ -1313,7 +1337,7 @@ OpenJsCad.Processor.prototype = {
         initial = paramdef['default'];
       }
       var control;
-      if( (type == "text") || (type == "int") || (type == "float") )
+      if(type == "text")
       {
         control = document.createElement("input");
         control.type = "text";
@@ -1323,14 +1347,20 @@ OpenJsCad.Processor.prototype = {
         }
         else
         {
-          if( (type == "int") || (type == "float") )
-          {
-            control.value = "0";
-          }
-          else
-          {
-            control.value = "";
-          }
+          control.value = "";
+        }
+      }
+      else if( (type == "int") || (type == "float") )
+      {
+        control = document.createElement("input");
+        control.type = "number";
+        if(initial !== undefined)
+        {
+          control.value = initial;
+        }
+        else
+        {
+          control.value = "0";
         }
       }
       else if(type == "choice")
@@ -1432,6 +1462,7 @@ OpenJsCad.Processor.prototype = {
       paramControls.push(control);
       var tr = document.createElement("tr");
       var td = document.createElement("td");
+      td.className = "base-text";
       var label = paramdef.name + ":";
       if('caption' in paramdef)
       {

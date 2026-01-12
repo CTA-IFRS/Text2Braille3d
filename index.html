@@ -24,9 +24,7 @@
 
 	body {
 		font: 14px/20px 'Helvetica Neue Light', 'HelveticaNeue-Light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-		max-width: 820px;
 		margin: 0 auto;
-		padding: 10px;
 	}
 	canvas {
 		border: 1px solid black;
@@ -71,6 +69,7 @@
 </style>
 <link rel="stylesheet" href="openjscad.css" type="text/css" />
 <link rel="stylesheet" href="custom.css" type="text/css" />
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
 <script>
 
@@ -118,7 +117,8 @@
 			$("#viewer .parametersdiv button")[0].innerHTML = "3D Modell generieren";
 
 		} else if (lang == "pt-br") {
-			$("#viewer .parametersdiv button")[0].innerHTML = "Gerar modelo 3D";
+			$("#viewer .parametersdiv button.parseParametersButton")[0].innerHTML = `Gerar modelo 3D <i class="bi bi-check-circle" style="font-size: 19px;"></i>`;
+			$("#viewer .parametersdiv button.resetParametersButton")[0].innerHTML = `Redefinir <i class="bi bi-arrow-clockwise" style="font-size: 19px;"></i>`;
 		}
 
 	}
@@ -170,27 +170,200 @@
 		gProcessor.rebuildSolid();
 	}
 
+	function fecharMenu(id) {
+		const menu = document.getElementById(id);
+		if (menu) {
+			menu.style.display = 'none';
+		}
+	}
+
+	function abrirMenu(id) {
+		const menu = document.getElementById(id);
+		if (menu) {
+			menu.style.display = 'flex';
+		}
+	}
+
 </script>
 	<title>Texto para placa Braille 3D</title>
 </head>
 <body onload="onload()">
-	<div class="warning"> 
-		<p>O Projeto original pode ser encontrado em: <a href="https://github.com/v01pe/Text2Braille3d">https://github.com/v01pe/Text2Braille3d</a></p>
-		<p>A licença orginal pode ser encontrada em: <a href="https://github.com/CTA-IFRS/Text2Braille3d/blob/gh-pages/LICENSE">https://github.com/CTA-IFRS/Text2Braille3d/blob/gh-pages/LICENSE</a></p>
-		<p>O Projeto do POALab com a tradução do alemão para português pode ser encontrado em: <a href="https://www.poalab.net.br/t2b/">https://www.poalab.net.br/t2b/</a></p>
-	</div>
-
-	<div> 
-		<div class="tutorial-left">
-			<h1>Texto para placa Braille 3D</h1>
-		</div>
-		<div class="tutorial-right">
-			<a href="https://drive.google.com/file/d/1IWFulWs4U3aXDutet2T7sLcc1oiayMGT/view?usp=sharing">
-				Tutorial para impressão 3D de placas de sinalização em Braille
+	<header class="shadow">
+        <div class="center">
+            <a href="#" class="logo-link">
+				<img src="/img/logo-text2braille3d.png" width="69px" alt="logotipo Text2Braille3D">
+				<h1 class="h4">Text2Braille3D</h1>
 			</a>
+			<div class="botoes">
+				<div class="configuracoes">
+					<button onclick="abrirMenu('menu-config')" class="menu-btn">
+						<span class="sr-only">Configurações</span>
+						<i class="bi bi-gear-fill" style="font-size: 26px;"></i>
+					</button>
+					<div id="menu-config" class="menu shadow" style="display:none;">
+						<div class="menu-title">
+                            <h2 class="h5">Configurações</h2>
+                            <button type="button" class="btn-close" onclick="fecharMenu('menu-config')">
+								<span class="sr-only">Fechar menu de configurações</span>
+								<i class="bi bi-x" style="font-size: 40px;"></i>
+							</button>
+                        </div>
+                        <ul id="accessibility-content">
+							<li>
+								<button type="button" id="normal-contrast" class="base-text">Contraste normal</button>
+							</li>
+							<li>
+								<button type="button" id="sepia-contrast" class="base-text">Sépia</button>
+							</li>
+							<li>
+								<button type="button" id="high-contrast" class="base-text">Alto contraste</button>
+							</li>
+						</ul>
+					</div>
+				</div>
+				<div class="menu-padrao">
+					<button onclick="abrirMenu('menu')" class="menu-btn">
+						<span class="sr-only">Menu</span>
+						<i class="bi bi-list" style="font-size: 30px;"></i>
+					</button>
+					<div id="menu" class="menu shadow" style="display:none;">
+						<div class="menu-title">
+                            <h2 class="h5">Menu</h2>
+                            <button type="button" class="btn-close" onclick="fecharMenu('menu')">
+								<span class="sr-only">Fechar menu</span>
+								<i class="bi bi-x" style="font-size: 40px;"></i>
+							</button>
+                        </div>
+						<ul>
+							<li>
+								<a href="#" class="nav-link" id="abrir-sobre">
+                                    Sobre
+                                </a>
+							</li>
+							<li>
+								<a href="#" class="nav-link">
+                                    Manual (link externo)
+                                </a>
+							</li>
+						</ul>
+						<a href="https://cta.ifrs.edu.br" class="logo-cta">
+							<img src="../img/logo-cta.png" width="160px" alt="Logo do CTA - Centro Tecnológico de Acessibilidade do IFRS" />
+						</a>
+					</div>
+					<div class="modal" id="sobre-modal" aria-hidden="true" role="dialog" aria-modal="true">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h2 class="modal-title h4">Sobre o Text2Braille3D</h2>
+								<button type="button" class="fechar-modal btn-close">
+									<span class="sr-only">Fechar modal</span>
+									<i class="bi bi-x" style="font-size: 40px;"></i>
+								</button>
+							</button>
+							</div>
+							<div class="modal-body">
+								<p class="lead-text">A ferramenta Text2Braille3D permite gerar modelos 3D de placa de sinalização em Braille, que posteriormente serão impressos em uma impressora 3D. Para a geração da placa será necessário fornecer o texto que se deseja converter para Braille e configurar os parâmetros para geração do modelo 3D.</p>
+								<ul>
+									<li class="base-text">
+										O Projeto original pode ser encontrado em: <a href="https://github.com/v01pe/Text2Braille3d">https://github.com/v01pe/Text2Braille3d (link externo)</a>
+									</li>
+									<li class="base-text">
+										A licença orginal pode ser encontrada em: <a href="https://github.com/CTA-IFRS/Text2Braille3d/blob/gh-pages/LICENSE">https://github.com/CTA-IFRS/Text2Braille3d/blob/gh-pages/LICENSE (link externo)</a>
+									</li>
+									<li class="base-text">
+										O Projeto do POALab com a tradução do alemão para português pode ser encontrado em: <a href="https://www.poalab.net.br/t2b/">https://www.poalab.net.br/t2b/ (link externo)</a>
+									</li>
+								</ul>
+							</div>
+							<div class="modal-footer">
+								<a href="https://cta.ifrs.edu.br">
+									<img src="../img/logo-cta.png" height="55px" alt="Logo do CTA - Centro Tecnológico de Acessibilidade do IFRS" />
+								</a>
+								<a href="https://ifrs.edu.br">
+									<img src="../img/logo-ifrs.png" height="55px" alt="Logo do IFRS - Instituto Federal de Educação Ciência e Tecnologia do Rio Grande do Sul" />
+								</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
-	</div>
+    </header>
 
-	<div id="viewer"></div>
+	<main>
+		<div>
+			<div class="tutorial" id="tutorial-alert" role="alert">
+				<a href="https://drive.google.com/file/d/1IWFulWs4U3aXDutet2T7sLcc1oiayMGT/view?usp=sharing">
+					Tutorial para impressão 3D de placas de sinalização em Braille
+				</a>
+				<button type="button" class="btn-close tutorial-btn" onclick="document.getElementById('tutorial-alert').style.display='none'">
+					<span class="sr-only">Fechar alerta</span>
+					<i class="bi bi-x" style="font-size: 30px;"></i>
+				</button>
+			</div>
+		</div>
+
+		<div id="viewer"></div>
+	</main>
+
+	<script>
+		const abrir = document.getElementById('abrir-sobre');
+		const modal = document.getElementById('sobre-modal');
+		const content = modal.querySelector('.modal-content');
+		const fechar = modal.querySelector('.fechar-modal');
+
+		let focusableElements = [];
+		let firstFocusable;
+		let lastFocusable;
+		let lastFocusedElement;
+
+		function getFocusableElements() {
+			focusableElements = content.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])');
+			firstFocusable = focusableElements[0];
+			lastFocusable = focusableElements[focusableElements.length - 1];
+		}
+
+		abrir.addEventListener('click', function (e) {
+			e.preventDefault();
+
+			lastFocusedElement = document.activeElement;
+
+			modal.classList.add('show');
+			modal.setAttribute('aria-hidden', 'false');
+
+			getFocusableElements();
+			firstFocusable.focus();
+		});
+
+		fechar.addEventListener('click', closeModal);
+
+		function closeModal() {
+			modal.classList.remove('show');
+			modal.setAttribute('aria-hidden', 'true');
+
+			lastFocusedElement.focus();
+		}
+
+		modal.addEventListener('keydown', function (e) {
+			if (e.key === 'Tab') {
+				getFocusableElements();
+			
+				if (e.shiftKey) {
+					if (document.activeElement === firstFocusable) {
+						e.preventDefault();
+						lastFocusable.focus();
+					}
+				} else {
+					if (document.activeElement === lastFocusable) {
+						e.preventDefault();
+						firstFocusable.focus();
+					}
+				}
+			}
+			if (e.key === 'Escape') {
+				closeModal();
+			}
+		});
+	</script>
+
 </body>
 </html>
