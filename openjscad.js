@@ -711,6 +711,8 @@ OpenJsCad.Processor.prototype = {
       this.containerdiv.appendChild(div);
     }
 */    
+    this.parametersdiv = document.createElement("div");
+    this.containerdiv.appendChild(this.parametersdiv);
     var rightDiv = document.createElement("div");
     rightDiv.className = "rightDiv shadow";
     this.containerdiv.appendChild(rightDiv);
@@ -737,6 +739,7 @@ OpenJsCad.Processor.prototype = {
     this.zoomControl.style.height = '20px';
     this.zoomControl.style.backgroundColor = 'transparent';
     this.zoomControl.style.overflowX = 'scroll';
+    this.zoomControl.className = 'zoomDiv';
     div.style.width = this.viewerwidth * 11 + 'px';
     div.style.height = '1px';
     this.zoomControl.appendChild(div);
@@ -804,7 +807,7 @@ OpenJsCad.Processor.prototype = {
     this.statusbuttons.appendChild(this.generateOutputFileButton);
     this.downloadOutputFileLink = document.createElement("a");
     this.statusbuttons.appendChild(this.downloadOutputFileLink);
-    this.parametersdiv = document.createElement("div");
+    //this.parametersdiv = document.createElement("div");
     this.parametersdiv.className = "parametersdiv";
     var headerdiv = document.createElement("div");
     headerdiv.innerText = "Parâmetros:";
@@ -835,7 +838,7 @@ OpenJsCad.Processor.prototype = {
     this.enableItems();    
     this.rightDiv.appendChild(this.statusdiv);
     this.rightDiv.appendChild(this.errordiv);
-    this.containerdiv.appendChild(this.parametersdiv);
+    //this.containerdiv.appendChild(this.parametersdiv);
     this.clearViewer();
   },
 
@@ -1306,6 +1309,8 @@ OpenJsCad.Processor.prototype = {
   
   createParamControls: function() {
     this.parameterstable.innerHTML = "";
+    this.tbody = document.createElement("tbody");
+    this.parameterstable.appendChild(this.tbody);
     this.paramControls = [];
     var paramControls = [];
     var tablerows = [];
@@ -1452,11 +1457,16 @@ OpenJsCad.Processor.prototype = {
             span = td.lastChild;
           }
           span.innerText = "  (" + this.value + "mm)";
+          span.className = "small-text";
         };
 
         control.addEventListener("change", _updateValue);
         control.addEventListener("input", _updateValue);
         
+      }
+
+      if(control.tagName === "TEXTAREA") {
+        control.tabIndex = 19;
       }
 
       paramControls.push(control);
@@ -1480,9 +1490,33 @@ OpenJsCad.Processor.prototype = {
       tr.appendChild(td);
       tablerows.push(tr);
     }
+    
+    this.showMoreParametersButton = document.createElement("button");
+    this.showMoreParametersButton.tabIndex = 20;
+    this.showMoreParametersButton.className = "h6"
+    this.showMoreParametersButton.innerHTML = `Exibir opções avançadas <i class="bi bi-chevron-down" style="margin-left: auto;font-size: 18px;"></i>`;
+
+    this.showMoreParametersButton.onclick = () => {
+      this.tbody.classList.toggle("expanded");
+      if (this.tbody.classList.contains("expanded")) {
+        this.showMoreParametersButton.innerHTML = `Exibir opções avançadas <i class="bi bi-chevron-up" style="margin-left: auto;font-size: 18px;"></i>`;
+      } else {
+        this.showMoreParametersButton.innerHTML = `Exibir opções avançadas <i class="bi bi-chevron-down" style="margin-left: auto;font-size: 18px;"></i>`;
+      }
+    };
+    
+    var tr = document.createElement("tr");
+    tr.className = "btn-expandir";
+    var td = document.createElement("td");
+    td.colSpan = 2;
+
+    td.appendChild(this.showMoreParametersButton);
+    tr.appendChild(td);
+    this.tbody.appendChild(tr);
+    
     var that = this;
     tablerows.map(function(tr){
-      that.parameterstable.appendChild(tr);
+      that.tbody.appendChild(tr);
     }); 
     this.paramControls = paramControls;
   },

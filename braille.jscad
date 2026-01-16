@@ -415,14 +415,14 @@ function getParameterDefinitions()
 	    { name: 'dot_distance', caption: 'Distância entre pontos [default: 2.7mm]:', type: 'float', initial: 2.7, begin: 1.6, end: 2.7, step: 0.01, visible: false},
 		//  { name: 'form_distance', caption: 'Form-Abstand', type: 'float', initial: 6.6},
 		//  { name: 'line_height', caption: 'Zeilen-Höhe', type: 'float', initial: 10.8, visible: false },
-	  	{ name: 'dot_height', caption: 'Altura do ponto [default: 0.75mm]:', type: 'range', initial: 0.75,  begin: 0.6, end: 0.8, step: 0.01},
-		{ name: 'dot_diameter', caption: 'Diâmetro do ponto [default: 1.9mm]:', type: 'range', initial: 1.9, begin: 1.2, end: 2.0, step: 0.01 },
+	  	{ name: 'dot_height', caption: 'Altura do ponto [default: 0.75mm]:', type: 'range', initial: 0.75,  begin: 0.6, end: 0.8, step: 0.01, visible: false },
+		{ name: 'dot_diameter', caption: 'Diâmetro do ponto [default: 1.9mm]:', type: 'range', initial: 1.9, begin: 1.2, end: 2.0, step: 0.01, visible: false },
 	
-		{ name: 'plate_thickness', caption: 'Espessura da placa (mm):', type: 'float', initial: 2.0 },
-		{ name: 'plate_margin', caption: 'Margem da placa (mm):', type: 'float', initial: 5.0 },
+		{ name: 'plate_thickness', caption: 'Espessura da placa (mm):', type: 'float', initial: 2.0, visible: false },
+		{ name: 'plate_margin', caption: 'Margem da placa (mm):', type: 'float', initial: 5.0, visible: false },
 	
-		{ name: 'reference_corner', caption: 'Gerar canto de referência ?', type: 'bool', initial: true },
-		{ name: 'stands', caption: 'Gerar apoios para impressão ?', type: 'bool', initial: true },
+		{ name: 'reference_corner', caption: 'Gerar canto de referência ?', type: 'bool', initial: true, visible: false },
+		{ name: 'stands', caption: 'Gerar apoios para impressão ?', type: 'bool', initial: true, visible: false },
 
 		{ name: 'resolution', caption: 'Resolução', type: 'int', initial: 16, visible: false },
 		{ name: 'dot_shape', caption: 'Formato do ponto', type: 'choice', values: ['sphere', 'cylinder', 'smooth'], captions: ['Esfera', 'Cilindro', 'Plano'], initial: 'smooth' , visible: false },
