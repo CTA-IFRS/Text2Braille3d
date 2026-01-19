@@ -711,7 +711,7 @@ OpenJsCad.Processor.prototype = {
       this.containerdiv.appendChild(div);
     }
 */    
-    this.parametersdiv = document.createElement("div");
+    this.parametersdiv = document.createElement("form");
     this.containerdiv.appendChild(this.parametersdiv);
     var rightDiv = document.createElement("div");
     rightDiv.className = "rightDiv shadow";
@@ -826,13 +826,38 @@ OpenJsCad.Processor.prototype = {
     parseParametersButton.onclick = function(e) {
       that.rebuildSolid();
     };
+    var invisibleButton = document.createElement("button");
+    invisibleButton.className = "invisibleButton";
     var resetParametersButton = document.createElement("button");
     resetParametersButton.className = "resetParametersButton btn btn-outline btn-gray";
     resetParametersButton.innerHTML = "Reset";
     resetParametersButton.onclick = function(e) {
-      //tem que fazer
-      console.log("Limpar parâmetros")
+      e.preventDefault();
+      
+      const values = {
+        text: "Olá Mundo",
+        dot_height: 0.75,
+        dot_diameter: 1.9,
+        plate_thickness: 2.0,
+        plate_margin: 5.0,
+        reference_corner: true,
+        stands: true
+      };
+      
+      Object.keys(values).forEach(function (name) {
+        const field = document.querySelector('[name="' + name + '"]');
+        if (!field) return;
+        if (field.type === "checkbox") {
+          field.checked = values[name];
+        } else {
+          field.value = values[name];
+          field.dispatchEvent(new Event("input"));
+          field.dispatchEvent(new Event("change"));
+        }
+      });
     };
+    
+    this.parametersButtonsDiv.appendChild(invisibleButton);
     this.parametersButtonsDiv.appendChild(resetParametersButton);
     this.parametersButtonsDiv.appendChild(parseParametersButton);
     this.enableItems();    
@@ -1469,6 +1494,7 @@ OpenJsCad.Processor.prototype = {
         control.tabIndex = 19;
       }
 
+      control.name = paramdef.name;
       paramControls.push(control);
       var tr = document.createElement("tr");
       var td = document.createElement("td");
@@ -1492,6 +1518,7 @@ OpenJsCad.Processor.prototype = {
     }
     
     this.showMoreParametersButton = document.createElement("button");
+    this.showMoreParametersButton.type = "button";
     this.showMoreParametersButton.tabIndex = 20;
     this.showMoreParametersButton.className = "h6"
     this.showMoreParametersButton.innerHTML = `Exibir opções avançadas <i class="bi bi-chevron-down" style="margin-left: auto;font-size: 18px;"></i>`;
