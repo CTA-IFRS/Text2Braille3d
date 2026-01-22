@@ -1,344 +1,257 @@
 <!DOCTYPE html>
-
-<html lang="pt-BR">	
+<html lang="pt-br">
 <head>
-
-	<!-- Global site tag (gtag.js) - Google Analytics -->
-	<script async src="https://www.googletagmanager.com/gtag/js?id=G-HNH48QK9VB"></script>
-	<script>
-	  window.dataLayer = window.dataLayer || [];
-	  function gtag(){dataLayer.push(arguments);}
-	  gtag('js', new Date());
-
-	  gtag('config', 'G-HNH48QK9VB');
-	</script>
-	
-	<meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<script type="text/javascript" src="lightgl.js"></script>
-<script type="text/javascript" src="csg.js"></script>
-<script type="text/javascript" src="openjscad.js"></script>
-<script type="text/javascript" src="braille.jscad" charset="utf-8"></script>
-<script type="text/javascript" src="jquery-1.10.1.min.js"></script>
-<style>
-
-	body {
-		font: 14px/20px 'Helvetica Neue Light', 'HelveticaNeue-Light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-		margin: 0 auto;
-	}
-	canvas {
-		border: 1px solid black;
-		margin: 0px 8px;
-	}
-	pre, code {
-		font: 12px/20px Monaco, monospace;
-		border: 1px solid #CCC;
-		border-radius: 3px;
-		background: #F9F9F9;
-		padding: 0 3px;
-		color: #555;
-	}
-	pre {
-		padding: 10px;
-		width: 100%;
-	}
-	textarea {
-		font: 12px/20px Monaco, monospace;
-		padding: 5px 8px;
-		width: 300px;
-		height: 100px;
-	}
-	td {
-		vertical-align: top;
-	}
-
-	canvas { cursor: move; }
-
-	.tutorial-left {
-		width: 49%;
-		display: inline-block;
-	}
-
-	.tutorial-right {
-		width: 49%;
-		display: inline-block;
-		text-align: right;
-	}
-
-
-</style>
-<link rel="stylesheet" href="openjscad.css" type="text/css" />
-<link rel="stylesheet" href="custom.css" type="text/css" />
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-
-<script>
-
-	var gProcessor=null;
-	var detailsOffset = 4;
-	var detailsAmount = 7;
-
-	// Show all exceptions to the user:
-	OpenJsCad.AlertUserOfUncaughtExceptions();
-
-	function onload()
-	{
-		gProcessor = new OpenJsCad.Processor(document.getElementById("viewer"));
-		jQuery.get('braille.jscad', function(data)
-		{
-			gProcessor.setJsCad(data, "braille.jscad");
-			//showDetails(false);
-		});
-		
-		adaptControls();
-	}
-	
-	function adaptControls()
-	{
-		if (gProcessor.viewer != null)
-			gProcessor.viewer.gl.clearColor(1, 1, 0.97, 1);
-		
-		$("#viewer .viewer")[0].style.backgroundColor = "white";
-		$("#viewer .parametersdiv button")[0].onclick = parseParameters;
-		
-		var moreElement = "<hr/><p><a id='more'></a></p>";
-		
-		$("#viewer .parametersdiv .parameterstable").after(moreElement);
-		
-		setLanguage("pt-br");
-	}
-	
-	function setLanguage(lang)
-	{
-		if (lang == "german")
-		{
-			// var $statusBar = $("#viewer .statusdiv");
-			// $statusBar.children("span")[0].innerHTML = "Fertig."
-			
-			$("#viewer .parametersdiv button")[0].innerHTML = "3D Modell generieren";
-
-		} else if (lang == "pt-br") {
-			$("#viewer .parametersdiv button.parseParametersButton")[0].innerHTML = `Gerar modelo 3D <i class="bi bi-check-circle" style="font-size: 19px;"></i>`;
-			$("#viewer .parametersdiv button.resetParametersButton")[0].innerHTML = `Redefinir <i class="bi bi-arrow-clockwise" style="font-size: 19px;"></i>`;
-		}
-
-	}
-	
-	// function showDetails(show)
-	// {
-	// 	var tableRows = $("#viewer .parametersdiv .parameterstable tr");
-		
-	// 	for (var i=detailsOffset; i < tableRows.length && i < detailsOffset+detailsAmount; i++)
-	// 	{
-	// 		tableRows[i].style.display = (show) ? "table-row" : "none";
-	// 	}
-		
-	// 	var moreLink = $("#more")[0];
-	// 	moreLink.innerHTML = (show) ? "Modo simples" : "Modo detalhado";
-	// 	moreLink.href = "javascript:showDetails(" + !show + ");";
-	// }
-	
-	function parseParameters()
-	{
-		var param_form_size = $("#viewer .parametersdiv .parameterstable tr:eq(4) td:eq(1) input")[0];
-		param_form_size.value = Math.min(Math.max(param_form_size.value, 0.0), 10.0);
-
-		var param_dot_dist = $("#viewer .parametersdiv .parameterstable tr:eq(5) td:eq(1) input")[0];
-		param_dot_dist.value = Math.min(Math.max(param_dot_dist.value, 2.6), 2.7);
-		
-		var param_dot_height = $("#viewer .parametersdiv .parameterstable tr:eq(6) td:eq(1) input")[0];
-		param_dot_height.value = Math.min(Math.max(param_dot_height.value, 0.6), 0.8);
-
-		// var param_dot_height = $("#viewer .parametersdiv .parameterstable tr:eq(7) td:eq(1) input")[0];
-		// param_dot_height.value = Math.min(Math.max(param_dot_height.value, 0.5), 3.0);
-		
-		var param_dot_diameter = $("#viewer .parametersdiv .parameterstable tr:eq(7) td:eq(1) input")[0];
-		param_dot_diameter.value = Math.min(Math.max(param_dot_diameter.value, 1.2), 2.0);
-		
-		var param_plate_thickness = $("#viewer .parametersdiv .parameterstable tr:eq(8) td:eq(1) input")[0];
-		param_plate_thickness.value = Math.max(param_plate_thickness.value, 1.0);
-
-		var param_plate_margin = $("#viewer .parametersdiv .parameterstable tr:eq(9) td:eq(1) input")[0];
-		param_plate_margin.value = Math.max(param_plate_margin.value, 1.0);
-		
-		var param_resolution = $("#viewer .parametersdiv .parameterstable tr:eq(11) td:eq(1) input")[0];
-		var isnumber = !isNaN(parseInt(param_resolution.value)) && isFinite(param_resolution.value);
-		var resolution = (isnumber) ? parseInt(param_resolution.value) : 0;
-		resolution = Math.min(Math.max(param_resolution.value, 10), 30);
-		resolution += (resolution % 2);
-		param_resolution.value = resolution;
-		
-		gProcessor.rebuildSolid();
-	}
-
-	function fecharMenu(id) {
-		const menu = document.getElementById(id);
-		if (menu) {
-			menu.style.display = 'none';
-		}
-	}
-
-	function abrirMenu(id) {
-		const menu = document.getElementById(id);
-		if (menu) {
-			menu.style.display = 'flex';
-		}
-	}
-
-	function contrasteNormal() {
-		document.body.classList.remove('sepia-contrast','high-contrast');
-	}
-
-	function contrasteSepia() {
-		document.body.classList.add('sepia-contrast');
-		document.body.classList.remove('high-contrast');
-	}
-	
-	function altoContraste() {
-		document.body.classList.add('high-contrast');
-		document.body.classList.remove('sepia-contrast');
-	}
-
-</script>
 	<title>Texto para placa Braille 3D</title>
+
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<meta name="description" content="">
+    <!--COLOCAR DESCRIPTION-->
+    <link href="img/logo-text2braille3d.png" rel="shortcut icon" type="image/x-icon" />
+
+	<!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+
+	<!-- Custom CSS -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/high_contrast.css">
+
+    <!-- Fonte Montserrat -->
+    <link href='https://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet'>
+
 </head>
-<body onload="onload()">
-	<header class="shadow">
-        <div class="center">
-            <a href="#" class="logo-link" tabindex="1">
-				<img src="/img/logo-text2braille3d.png" width="69px" alt="logotipo Text2Braille3D">
-				<h1 class="h4">Text2Braille3D</h1>
-			</a>
-			<div class="botoes">
-				<div class="configuracoes">
-					<button onclick="abrirMenu('menu-config')" class="menu-btn" tabindex="2">
-						<span class="sr-only">Configurações</span>
-						<i class="bi bi-gear-fill" style="font-size: 26px;"></i>
-					</button>
-					<div id="menu-config" class="menu shadow" style="display:none;">
-						<div class="menu-title">
-                            <h2 class="h5">Configurações</h2>
-                            <button type="button" class="btn-close" onclick="fecharMenu('menu-config')" tabindex="6">
-								<span class="sr-only">Fechar menu de configurações</span>
-								<i class="bi bi-x" style="font-size: 40px;"></i>
-							</button>
+<body>
+    <!-- Barra de acessibilidade -->
+    <nav class="barra-acessibilidade navbar navbar-expand-sm navbar-dark" aria-label="Menu de acessibilidade">
+        <button type="button" class="navbar-toggler bg-dark" data-toggle="collapse" data-target="#menuAcessibilidade" aria-controls="menuAcessibilidade" aria-expanded="false" aria-label="Expandir menu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div id="menuAcessibilidade" class="collapse navbar-collapse">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link text-dark py-0" href="#conteudo-principal" accesskey="1"><small>Ir para o conteúdo
+                        <span class="badge badge-dark">1</span></small>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-dark py-0" href="#menu-principal" accesskey="2"><small>Ir para o menu
+                        <span class="badge badge-dark">2</span></small>
+                    </a>
+                </li>
+            </ul>
+            <ul class="navbar-nav navbar-right ml-auto">
+                <li class="nav-item my-2 my-md-0">
+                    <a class="nav-link text-dark py-0" id="high_contrast" aria-checked="false" href=""><small><i class="bi bi-circle-half">&nbsp;</i> Alto contraste</small></a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Menu principal -->
+    <a href="#menu-principal" id="menu-principal" class="sr-only">Início do menu principal</a>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light menu-principal">
+        <div class="container py-3">
+            <a class="navbar-brand h4" id="text2braille3d" href=""><img src="img/logo-text2braille3d.png" height="69px" class="mr-2">Text2Braille3D</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="nav navbar-nav ml-auto">
+                    <li class="nav-item">
+                        <a class="nav-link px-4" href="#about">Sobre</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-4" href="#manuals">Manuais</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-4" href="#feedback">Feedback</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-4" href="#contribute">Contribua</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link pl-4" href="#contact">Contato</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+	
+    <a href="#conteudo-principal" id="conteudo-principal" class="sr-only">Início do conteúdo</a>
+    
+    <div class="container py-5 border-bottom" id="main">
+        <div class="row gx-5 align-items-center pb-5">
+            <div class="col-md-6 aos-init aos-animate" data-aos="fade-up">
+                <h1 class="display-4 mb-3 font-weight-bold"><strong>Texto para placa Braille 3D</strong></h1>
+                <p class="page-header-ui-text mb-5 pr-4 lead-text2">A ferramenta Text2Braille3D permite gerar modelos 3D de placa de sinalização em Braille, que posteriormente serão impressos em uma impressora 3D.</p>
+                <div class="d-flex flex-column flex-sm-row">
+                    <a class="btn btn-primary fw-500 py-2 px-4 me-sm-3 mb-3 mb-sm-0" href="placa/">
+                        Acessar a ferramenta
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right ms-2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-6 d-lg-block aos-init aos-animate" data-aos="fade-up" data-aos-delay="100">
+                <img class="img-fluid" src="img/smartmockup-text.png" alt="">
+            </div>
+        </div>
+    </div>
+
+    <div class="container py-5" id="about">
+        <div class="row">
+            <h2 class="h1 col font-weight-bold text-center">Conheça mais sobre o Text2Braille3D</h2>
+        </div>
+        <div class="row py-4">
+            <div class="col-sm-12">
+                <blockquote class="blockquote text-center text-black-50 lead-text2">
+                    <p>Conversor de texto para modelos 3D de placa de sinalização em Braille</p>
+                </blockquote>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-sm-7 text-black-50">
+                <p class="base-text2">Lorem ipsum dolor, sit amet consectetur adipisicing elit. Accusantium, consequuntur ducimus. Laboriosam, sed? Ipsam cumque possimus nisi, labore, voluptates illum facere nihil aut enim saepe rem ea distinctio consectetur dolorem?</p>
+                <p class="base-text2">Lorem ipsum dolor, sit amet consectetur adipisicing elit. Accusantium, consequuntur ducimus. Laboriosam, sed? Ipsam cumque possimus nisi, labore, voluptates illum facere nihil aut enim saepe rem ea distinctio consectetur dolorem?</p>
+                <p class="base-text2">Lorem ipsum dolor, sit amet consectetur adipisicing elit. Accusantium, consequuntur ducimus. Laboriosam, sed? Ipsam cumque possimus nisi, labore, voluptates illum facere nihil aut enim saepe rem ea distinctio consectetur dolorem?</p>
+            </div>
+            <div class="col-sm-5">
+                <img src="img/about.png" alt="Printscreen da ferramenta Text2Braille3D com opções avançadas exibidas" class="img-fluid border p-1 rounded">
+            </div>
+        </div>
+        <div class="row mt-5 pt-4 mb-5">
+            <h3 class="font-weight-bold col-sm">Principais características</h3>
+        </div>
+        <ul class="row list-unstyled">
+            <li class="media col-sm-6 float-left mb-4">
+                <img class="mr-3 border" src="img/bullet-no-ads.png" alt="">
+                <div class="media-body">
+                    <h4 class="h6 text-uppercase font-weight-bold mt-0 mb-2">Gratuito e sem propagandas</h4>
+                    <small class="small-text">Lorem ipsum dolor sit amet consectetur, adipisicing elit. Molestiae rerum ex expedita dolores sapiente error dicta placeat eius quae amet! Vel laborum quaerat</small>
+                </div>
+            </li>
+            <li class="media col-sm-6 float-left mb-4">
+                <img class="mr-3 border" src="img/bullet-contrast.png" alt="">
+                <div class="media-body">
+                    <h4 class="h6 text-uppercase font-weight-bold mt-0 mb-2">Modo escuro</h4>
+                    <small class="small-text">Nas configurações, é possível ativar o modo escuro, que modifica o esquema de cores da prancha, apresentando-a com cores escuras e com alto contraste.</small>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="bg-light py-5" id="manuals">
+        <div class="container">
+            <div class="row">
+                <h2 class="h1 col-sm font-weight-bold text-left mt-2"><span class="sr-only">Manual - </span>Aproveite ao máximo este App</h2>
+            </div>
+            <div class="row">
+                <div class="col-sm-8">
+                    <p class="mt-4 lead-text3">Disponibilizamos o manual de uso para que você aprenda a usar a ferramenta Text2Braille3D.</p>
+                </div>
+                <div class="col-sm-4">
+                    <a href="manual/index.html#section-2" class="btn btn-dark col-12 mb-3 mt-2">Manual de uso</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="py-5" id="feedback">
+        <div class="container">
+            <div class="row mt-5 pt-5">
+                <h2 class="col h1 font-weight-bold text-center">Ajude-nos a melhorar</h2>
+            </div>
+            <div class="row justify-content-center">
+                <p class="col-8 mt-3 mb-4 text-center lead-text3">Seu feedback é muito importante. Envie um e-mail para nós contando sua experiência para identificarmos o que podemos melhorar, assim como, os pontos positivos.</p>
+            </div>
+            <div class="row justify-content-center mb-5 pb-5">
+                <div class="col-sm-3 text-center">
+                    <a href="mailto:cta@ifrs.edu.br" class="btn py-2 btn-dark">E-mail: cta@ifrs.edu.br</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="py-5 bg-light" id="contribute">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-8">
+                    <h2 class="h1 font-weight-bold">Contribua com o projeto</h2>
+                    <p class="lead-text3 pt-2 mt-4 mb-4">O projeto desse App está hospedado no GitHub para que você, desenvolvedor ou empresa, contribua com melhorias ou correções caso encontrem algum bug.</p>
+                    <div class="gh-button">
+                        <a href="https://github.com/CTA-IFRS/Text2Braille3d" class="btn btn-dark py-2 px-5 btn-fit">GitHub do projeto</a>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <img src="img/contribute.png" class="w-100">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="py-5" id="contact">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6 col-sm-12">
+                    <h2 class="font-weight-bold text-center text-sm-left">Entre em contato</h2>
+                    <p class="pt-2 mt-4 mb-3 lead-text3">Para conhecer mais sobre os trabalhos e projetos desenvolvidos pelo CTA acesse nosso site ou redes sociais disponíveis na lista abaixo.</p>
+                    <ul class="list-unstyled pl-2 pl-sm-0">
+                        <li>
+                            <a class="" href="mailto:cta@ifrs.edu.br"><small class="base-text2"><i class="bi bi-envelope mr-1"> </i>cta@ifrs.edu.br</small></a>
+                        </li>
+                        <li>
+                            <a class="" href="https://cta.ifrs.edu.br"><small class="base-text2"><i class="bi bi-cursor mr-1"> </i>cta.ifrs.edu.br</small></a>
+                        </li>
+                        <li>
+                            <a class="" href="https://instagram.com/cta-ifrs"><small class="base-text2"><i class="bi bi-instagram mr-1"> </i>instagram.com/cta-ifrs</small></a>
+                        </li>
+                        <li>
+                            <a class="" href="https://youtube.com/cta-ifrs"><small class="base-text2"><i class="bi bi-youtube mr-1"> </i>youtube.com/cta-ifrs</small></a>
+                        </li>
+                        <li>
+                            <a class="" href="https://facebook.com/cta-ifrs"><small class="base-text2"><i class="bi bi-facebook mr-1"> </i>facebook.com/cta-ifrs</small></a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-lg-6 col-sm-12 col-12 mt-4 pt-lg-5 pt-sm-1">
+                    <div class="row">
+                        <div class="col-8">
+                            <img class="w-100 border rounded p-3 border-0 bg-white" src="img/logo-cta.png">
                         </div>
-                        <ul id="accessibility-content">
-							<li>
-								<button onclick="contrasteNormal()" type="button" id="normal-contrast" class="base-text" tabindex="3">Contraste normal</button>
-							</li>
-							<li>
-								<button onclick="contrasteSepia()" type="button" id="sepia-contrast" class="base-text" tabindex="4">Sépia</button>
-							</li>
-							<li>
-								<button onclick="altoContraste()" type="button" id="high-contrast" class="base-text" tabindex="5">Alto contraste</button>
-							</li>
-						</ul>
-					</div>
-				</div>
-				<div class="menu-padrao">
-					<button onclick="abrirMenu('menu')" class="menu-btn" tabindex="7">
-						<span class="sr-only">Menu</span>
-						<i class="bi bi-list" style="font-size: 30px;"></i>
-					</button>
-					<div id="menu" class="menu shadow" style="display:none;">
-						<div class="menu-title">
-                            <h2 class="h5">Menu</h2>
-                            <button type="button" class="btn-close" onclick="fecharMenu('menu')" tabindex="16">
-								<span class="sr-only">Fechar menu</span>
-								<i class="bi bi-x" style="font-size: 40px;"></i>
-							</button>
+                        <div class="col-4">
+                            <img class="w-100 border rounded p-3 border-0 mb-4 bg-white" src="img/logo-proen.png">
+                            <img class="w-100 border rounded p-3 border-0 bg-white" src="img/logo-ifrs.png">
                         </div>
-						<ul>
-							<li>
-								<a href="#" class="nav-link" id="abrir-sobre" tabindex="8">
-                                    Sobre
-                                </a>
-							</li>
-							<li>
-								<a href="#" class="nav-link" tabindex="15">
-                                    Manual (link externo)
-                                </a>
-							</li>
-						</ul>
-						<a href="https://cta.ifrs.edu.br" class="logo-cta" tabindex="16">
-							<img src="../img/logo-cta.png" width="160px" alt="Logo do CTA - Centro Tecnológico de Acessibilidade do IFRS" />
-						</a>
-					</div>
-					<div class="modal" id="sobre-modal" aria-hidden="true" role="dialog" aria-modal="true">
-						<div class="modal-content">
-							<div class="modal-header">
-								<h2 class="modal-title h4">Sobre o Text2Braille3D</h2>
-								<button type="button" class="fechar-modal btn-close" tabindex="14">
-									<span class="sr-only">Fechar modal</span>
-									<i class="bi bi-x" style="font-size: 40px;"></i>
-								</button>
-							</button>
-							</div>
-							<div class="modal-body">
-								<p class="lead-text">A ferramenta Text2Braille3D permite gerar modelos 3D de placa de sinalização em Braille, que posteriormente serão impressos em uma impressora 3D. Para a geração da placa será necessário fornecer o texto que se deseja converter para Braille e configurar os parâmetros para geração do modelo 3D.</p>
-								<ul>
-									<li class="base-text">
-										O Projeto original pode ser encontrado em: <a href="https://github.com/v01pe/Text2Braille3d" tabindex="9">https://github.com/v01pe/Text2Braille3d (link externo)</a>
-									</li>
-									<li class="base-text">
-										A licença orginal pode ser encontrada em: <a href="https://github.com/CTA-IFRS/Text2Braille3d/blob/gh-pages/LICENSE" tabindex="10">https://github.com/CTA-IFRS/Text2Braille3d/blob/gh-pages/LICENSE (link externo)</a>
-									</li>
-									<li class="base-text">
-										O Projeto do POALab com a tradução do alemão para português pode ser encontrado em: <a href="https://www.poalab.net.br/t2b/" tabindex="11">https://www.poalab.net.br/t2b/ (link externo)</a>
-									</li>
-								</ul>
-							</div>
-							<div class="modal-footer">
-								<a href="https://cta.ifrs.edu.br" tabindex="12">
-									<img src="../img/logo-cta.png" height="55px" alt="Logo do CTA - Centro Tecnológico de Acessibilidade do IFRS" />
-								</a>
-								<a href="https://ifrs.edu.br" tabindex="13">
-									<img src="../img/logo-ifrs.png" height="55px" alt="Logo do IFRS - Instituto Federal de Educação Ciência e Tecnologia do Rio Grande do Sul" />
-								</a>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-    </header>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-	<main>
-		<div>
-			<div class="tutorial" id="tutorial-alert" role="alert">
-				<a href="https://drive.google.com/file/d/1IWFulWs4U3aXDutet2T7sLcc1oiayMGT/view?usp=sharing" tabindex="17">
-					Tutorial para impressão 3D de placas de sinalização em Braille
-				</a>
-				<button type="button" class="btn-close tutorial-btn" onclick="document.getElementById('tutorial-alert').style.display='none'" tabindex="18">
-					<span class="sr-only">Fechar alerta</span>
-					<i class="bi bi-x" style="font-size: 30px;"></i>
-				</button>
-			</div>
-		</div>
+    <div class="container-fluid bg-light" id="developed-by">
+        <div class="row d-flex justify-content-center">
+            <div class="py-4 text-center col-lg-10 col-md-9 col-sm-8 col-7" id="footer">
+                <p class="font-weight-bold p-0 m-0 lead-text3"><small>Desenvolvido por CTA - IFRS. Aplicativo sob a licença GPLv3 e Creative Commons NonCommercial-ShareAlike 3.0 Unported (CC BY-NC-SA 3.0)</small></p>
+            </div>
+        </div>
+    </div>
 
-		<div id="viewer"></div>
-	</main>
+    <a id="btn-back-to-top" href="" class="btn btn-primary btn-lg" role="button">
+        <i class="bi bi-arrow-up-short"></i>
+        <span class="sr-only">Voltar para o início do site</span>
+    </a>
 
-	<script>
-		const abrir = document.getElementById('abrir-sobre');
-		const modal = document.getElementById('sobre-modal');
-		const fechar = modal.querySelector('.fechar-modal');
-		
-		abrir.addEventListener('click', function (e) {
-			e.preventDefault();
-			modal.classList.add('show');
-			modal.setAttribute('aria-hidden', 'false');
+	<!-- Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-Piv4xVNRyMGpqkS2by6br4gNJ7DXjqk09RmUpJ8jgGtD7zP9yug3goQfGII0yAns" crossorigin="anonymous"></script>
 
-		});
+	<!-- JS-Cookie -->
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.0/dist/js.cookie.min.js"></script>
 
-		fechar.addEventListener('click', closeModal);
-
-		function closeModal() {
-			modal.classList.remove('show');
-			modal.setAttribute('aria-hidden', 'true');
-		}
-	</script>
+    <!-- Custom JS -->
+    <script src="js/main.js"></script>
+    <script src="js/high_contrast.js"></script>
 
 </body>
 </html>

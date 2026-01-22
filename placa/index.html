@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">	
+<head>
+
+	<!-- Global site tag (gtag.js) - Google Analytics -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-HNH48QK9VB"></script>
+	<script>
+	  window.dataLayer = window.dataLayer || [];
+	  function gtag(){dataLayer.push(arguments);}
+	  gtag('js', new Date());
+
+	  gtag('config', 'G-HNH48QK9VB');
+	</script>
+	
+	<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script type="text/javascript" src="lightgl.js"></script>
+<script type="text/javascript" src="csg.js"></script>
+<script type="text/javascript" src="openjscad.js"></script>
+<script type="text/javascript" src="braille.jscad" charset="utf-8"></script>
+<script type="text/javascript" src="jquery-1.10.1.min.js"></script>
+<style>
+
+	body {
+		font: 14px/20px 'Helvetica Neue Light', 'HelveticaNeue-Light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+		margin: 0 auto;
+	}
+	canvas {
+		border: 1px solid black;
+		margin: 0px 8px;
+	}
+	pre, code {
+		font: 12px/20px Monaco, monospace;
+		border: 1px solid #CCC;
+		border-radius: 3px;
+		background: #F9F9F9;
+		padding: 0 3px;
+		color: #555;
+	}
+	pre {
+		padding: 10px;
+		width: 100%;
+	}
+	textarea {
+		font: 12px/20px Monaco, monospace;
+		padding: 5px 8px;
+		width: 300px;
+		height: 100px;
+	}
+	td {
+		vertical-align: top;
+	}
+
+	canvas { cursor: move; }
+
+	.tutorial-left {
+		width: 49%;
+		display: inline-block;
+	}
+
+	.tutorial-right {
+		width: 49%;
+		display: inline-block;
+		text-align: right;
+	}
+
+
+</style>
+<link rel="stylesheet" href="openjscad.css" type="text/css" />
+<link rel="stylesheet" href="custom.css" type="text/css" />
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+<script>
+
+	var gProcessor=null;
+	var detailsOffset = 4;
+	var detailsAmount = 7;
+
+	// Show all exceptions to the user:
+	OpenJsCad.AlertUserOfUncaughtExceptions();
+
+	function onload()
+	{
+		gProcessor = new OpenJsCad.Processor(document.getElementById("viewer"));
+		jQuery.get('braille.jscad', function(data)
+		{
+			gProcessor.setJsCad(data, "braille.jscad");
+			//showDetails(false);
+		});
+		
+		adaptControls();
+	}
+	
+	function adaptControls()
+	{
+		if (gProcessor.viewer != null)
+			gProcessor.viewer.gl.clearColor(1, 1, 0.97, 1);
+		
+		$("#viewer .viewer")[0].style.backgroundColor = "white";
+		$("#viewer .parametersdiv button")[0].onclick = parseParameters;
+		
+		var moreElement = "<hr/><p><a id='more'></a></p>";
+		
+		$("#viewer .parametersdiv .parameterstable").after(moreElement);
+		
+		setLanguage("pt-br");
+	}
+	
+	function setLanguage(lang)
+	{
+		if (lang == "german")
+		{
+			// var $statusBar = $("#viewer .statusdiv");
+			// $statusBar.children("span")[0].innerHTML = "Fertig."
+			
+			$("#viewer .parametersdiv button")[0].innerHTML = "3D Modell generieren";
+
+		} else if (lang == "pt-br") {
+			$("#viewer .parametersdiv button.parseParametersButton")[0].innerHTML = `Gerar modelo 3D <i class="bi bi-check-circle" style="font-size: 19px;"></i>`;
+			$("#viewer .parametersdiv button.resetParametersButton")[0].innerHTML = `Redefinir <i class="bi bi-arrow-clockwise" style="font-size: 19px;"></i>`;
+		}
+
+	}
+	
+	// function showDetails(show)
+	// {
+	// 	var tableRows = $("#viewer .parametersdiv .parameterstable tr");
+		
+	// 	for (var i=detailsOffset; i < tableRows.length && i < detailsOffset+detailsAmount; i++)
+	// 	{
+	// 		tableRows[i].style.display = (show) ? "table-row" : "none";
+	// 	}
+		
+	// 	var moreLink = $("#more")[0];
+	// 	moreLink.innerHTML = (show) ? "Modo simples" : "Modo detalhado";
+	// 	moreLink.href = "javascript:showDetails(" + !show + ");";
+	// }
+	
+	function parseParameters()
+	{
+		var param_form_size = $("#viewer .parametersdiv .parameterstable tr:eq(4) td:eq(1) input")[0];
+		param_form_size.value = Math.min(Math.max(param_form_size.value, 0.0), 10.0);
+
+		var param_dot_dist = $("#viewer .parametersdiv .parameterstable tr:eq(5) td:eq(1) input")[0];
+		param_dot_dist.value = Math.min(Math.max(param_dot_dist.value, 2.6), 2.7);
+		
+		var param_dot_height = $("#viewer .parametersdiv .parameterstable tr:eq(6) td:eq(1) input")[0];
+		param_dot_height.value = Math.min(Math.max(param_dot_height.value, 0.6), 0.8);
+
+		// var param_dot_height = $("#viewer .parametersdiv .parameterstable tr:eq(7) td:eq(1) input")[0];
+		// param_dot_height.value = Math.min(Math.max(param_dot_height.value, 0.5), 3.0);
+		
+		var param_dot_diameter = $("#viewer .parametersdiv .parameterstable tr:eq(7) td:eq(1) input")[0];
+		param_dot_diameter.value = Math.min(Math.max(param_dot_diameter.value, 1.2), 2.0);
+		
+		var param_plate_thickness = $("#viewer .parametersdiv .parameterstable tr:eq(8) td:eq(1) input")[0];
+		param_plate_thickness.value = Math.max(param_plate_thickness.value, 1.0);
+
+		var param_plate_margin = $("#viewer .parametersdiv .parameterstable tr:eq(9) td:eq(1) input")[0];
+		param_plate_margin.value = Math.max(param_plate_margin.value, 1.0);
+		
+		var param_resolution = $("#viewer .parametersdiv .parameterstable tr:eq(11) td:eq(1) input")[0];
+		var isnumber = !isNaN(parseInt(param_resolution.value)) && isFinite(param_resolution.value);
+		var resolution = (isnumber) ? parseInt(param_resolution.value) : 0;
+		resolution = Math.min(Math.max(param_resolution.value, 10), 30);
+		resolution += (resolution % 2);
+		param_resolution.value = resolution;
+		
+		gProcessor.rebuildSolid();
+	}
+
+	function fecharMenu(id) {
+		const menu = document.getElementById(id);
+		if (menu) {
+			menu.style.display = 'none';
+		}
+	}
+
+	function abrirMenu(id) {
+		const menu = document.getElementById(id);
+		if (menu) {
+			menu.style.display = 'flex';
+		}
+	}
+
+	function contrasteNormal() {
+		document.body.classList.remove('sepia-contrast','high-contrast');
+	}
+
+	function contrasteSepia() {
+		document.body.classList.add('sepia-contrast');
+		document.body.classList.remove('high-contrast');
+	}
+	
+	function altoContraste() {
+		document.body.classList.add('high-contrast');
+		document.body.classList.remove('sepia-contrast');
+	}
+
+</script>
+	<title>Texto para placa Braille 3D</title>
+</head>
+<body onload="onload()">
+	<header class="shadow">
+        <div class="center">
+            <a href="#" class="logo-link" tabindex="1">
+				<img src="/img/logo-text2braille3d.png" width="69px" alt="logotipo Text2Braille3D">
+				<h1 class="h4">Text2Braille3D</h1>
+			</a>
+			<div class="botoes">
+				<div class="configuracoes">
+					<button onclick="abrirMenu('menu-config')" class="menu-btn" tabindex="2">
+						<span class="sr-only">Configurações</span>
+						<i class="bi bi-gear-fill" style="font-size: 26px;"></i>
+					</button>
+					<div id="menu-config" class="menu shadow" style="display:none;">
+						<div class="menu-title">
+                            <h2 class="h5">Configurações</h2>
+                            <button type="button" class="btn-close" onclick="fecharMenu('menu-config')" tabindex="6">
+								<span class="sr-only">Fechar menu de configurações</span>
+								<i class="bi bi-x" style="font-size: 40px;"></i>
+							</button>
+                        </div>
+                        <ul id="accessibility-content">
+							<li>
+								<button onclick="contrasteNormal()" type="button" id="normal-contrast" class="base-text" tabindex="3">Contraste normal</button>
+							</li>
+							<li>
+								<button onclick="contrasteSepia()" type="button" id="sepia-contrast" class="base-text" tabindex="4">Sépia</button>
+							</li>
+							<li>
+								<button onclick="altoContraste()" type="button" id="high-contrast" class="base-text" tabindex="5">Alto contraste</button>
+							</li>
+						</ul>
+					</div>
+				</div>
+				<div class="menu-padrao">
+					<button onclick="abrirMenu('menu')" class="menu-btn" tabindex="7">
+						<span class="sr-only">Menu</span>
+						<i class="bi bi-list" style="font-size: 30px;"></i>
+					</button>
+					<div id="menu" class="menu shadow" style="display:none;">
+						<div class="menu-title">
+                            <h2 class="h5">Menu</h2>
+                            <button type="button" class="btn-close" onclick="fecharMenu('menu')" tabindex="16">
+								<span class="sr-only">Fechar menu</span>
+								<i class="bi bi-x" style="font-size: 40px;"></i>
+							</button>
+                        </div>
+						<ul>
+							<li>
+								<a href="#" class="nav-link" id="abrir-sobre" tabindex="8">
+                                    Sobre
+                                </a>
+							</li>
+							<li>
+								<a href="#" class="nav-link" tabindex="15">
+                                    Manual (link externo)
+                                </a>
+							</li>
+						</ul>
+						<a href="https://cta.ifrs.edu.br" class="logo-cta" tabindex="16">
+							<img src="../img/logo-cta.png" width="160px" alt="Logo do CTA - Centro Tecnológico de Acessibilidade do IFRS" />
+						</a>
+					</div>
+					<div class="modal" id="sobre-modal" aria-hidden="true" role="dialog" aria-modal="true">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h2 class="modal-title h4">Sobre o Text2Braille3D</h2>
+								<button type="button" class="fechar-modal btn-close" tabindex="14">
+									<span class="sr-only">Fechar modal</span>
+									<i class="bi bi-x" style="font-size: 40px;"></i>
+								</button>
+							</button>
+							</div>
+							<div class="modal-body">
+								<p class="lead-text">A ferramenta Text2Braille3D permite gerar modelos 3D de placa de sinalização em Braille, que posteriormente serão impressos em uma impressora 3D. Para a geração da placa será necessário fornecer o texto que se deseja converter para Braille e configurar os parâmetros para geração do modelo 3D.</p>
+								<ul>
+									<li class="base-text">
+										O Projeto original pode ser encontrado em: <a href="https://github.com/v01pe/Text2Braille3d" tabindex="9">https://github.com/v01pe/Text2Braille3d (link externo)</a>
+									</li>
+									<li class="base-text">
+										A licença orginal pode ser encontrada em: <a href="https://github.com/CTA-IFRS/Text2Braille3d/blob/gh-pages/LICENSE" tabindex="10">https://github.com/CTA-IFRS/Text2Braille3d/blob/gh-pages/LICENSE (link externo)</a>
+									</li>
+									<li class="base-text">
+										O Projeto do POALab com a tradução do alemão para português pode ser encontrado em: <a href="https://www.poalab.net.br/t2b/" tabindex="11">https://www.poalab.net.br/t2b/ (link externo)</a>
+									</li>
+								</ul>
+							</div>
+							<div class="modal-footer">
+								<a href="https://cta.ifrs.edu.br" tabindex="12">
+									<img src="../img/logo-cta.png" height="55px" alt="Logo do CTA - Centro Tecnológico de Acessibilidade do IFRS" />
+								</a>
+								<a href="https://ifrs.edu.br" tabindex="13">
+									<img src="../img/logo-ifrs.png" height="55px" alt="Logo do IFRS - Instituto Federal de Educação Ciência e Tecnologia do Rio Grande do Sul" />
+								</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+    </header>
+
+	<main>
+		<div>
+			<div class="tutorial" id="tutorial-alert" role="alert">
+				<a href="https://drive.google.com/file/d/1IWFulWs4U3aXDutet2T7sLcc1oiayMGT/view?usp=sharing" tabindex="17">
+					Tutorial para impressão 3D de placas de sinalização em Braille
+				</a>
+				<button type="button" class="btn-close tutorial-btn" onclick="document.getElementById('tutorial-alert').style.display='none'" tabindex="18">
+					<span class="sr-only">Fechar alerta</span>
+					<i class="bi bi-x" style="font-size: 30px;"></i>
+				</button>
+			</div>
+		</div>
+
+		<div id="viewer"></div>
+	</main>
+
+	<script>
+		const abrir = document.getElementById('abrir-sobre');
+		const modal = document.getElementById('sobre-modal');
+		const fechar = modal.querySelector('.fechar-modal');
+		
+		abrir.addEventListener('click', function (e) {
+			e.preventDefault();
+			modal.classList.add('show');
+			modal.setAttribute('aria-hidden', 'false');
+
+		});
+
+		fechar.addEventListener('click', closeModal);
+
+		function closeModal() {
+			modal.classList.remove('show');
+			modal.setAttribute('aria-hidden', 'true');
+		}
+	</script>
+
+</body>
+</html>
