@@ -259,13 +259,13 @@ header .center {
     cursor: pointer;
 }
 #normal-contrast {
-    background: url("../img/no-contrast-icon.png") center left no-repeat;
+    background: url("img/no-contrast-icon.png") center left no-repeat;
 }
 #high-contrast {
-    background: url("../img/high-contrast-icon.png") center left no-repeat;
+    background: url("img/high-contrast-icon.png") center left no-repeat;
 }
 #sepia-contrast {
-    background: url("../img/sepia-contrast-icon.png") center left no-repeat;
+    background: url("img/sepia-contrast-icon.png") center left no-repeat;
 }
 .menu {
     flex-direction: column;
