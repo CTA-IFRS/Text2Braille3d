@@ -407,7 +407,7 @@ function getParameterDefinitions()
 	
 	var parameterDefinitions = [
 		{ name: 'text', caption: 'Texto', type: 'longtext', initial: 'Olá Mundo' },
-		{ name: 'upper', caption: 'Maiúsculo', type: 'bool', initial: false, visible: false },
+		{ name: 'upper', caption: 'Maiúsculo', type: 'bool', initial: true, visible: false },
 		{ name: 'contractions', caption: 'Contrações', type: 'bool', initial: false, visible: false },
 		{ name: 'straight', caption: 'Conversão direta', type: 'bool', initial: false, visible: false },
 	
