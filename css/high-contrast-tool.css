@@ -1,0 +1,32 @@
+/* Opt-in dark, high-contrast interface; model/export colors are unchanged. */
+.tool-high-contrast {
+    color-scheme: dark;
+    --tool-primary: #FFFFFF;
+    --tool-hover: #FFFFFF;
+    --tool-focus: #FFFFFF;
+    --tool-soft: #FFFFFF;
+    --tool-background: #000000;
+    --tool-surface: #111111;
+    --tool-text: #FFFFFF;
+    --tool-muted: #E2E2E2;
+    --tool-border: #FFFFFF;
+    --tool-shadow: 0 5px 20px #00000080;
+}
+.tool-high-contrast .btn, .tool-high-contrast #viewer .btn {
+    --bs-btn-hover-color: #111; --bs-btn-active-color: #111;
+    --bs-btn-disabled-color: #E2E2E2; --bs-btn-disabled-border-color: #E2E2E2;
+}
+.tool-high-contrast .btn-primary, .tool-high-contrast #viewer .btn-primary,
+.tool-high-contrast .btn[aria-pressed="true"], .tool-high-contrast .workspace-toolbar .btn[aria-expanded="true"] { color: #111; --bs-btn-color: #111; --bs-btn-disabled-color: #111; }
+.tool-high-contrast .panel-toggle, .tool-high-contrast .view-cube-face { background: #111; color: #fff; border-color: #fff; }
+.tool-high-contrast .panel-toggle:hover, .tool-high-contrast .view-cube-face:hover, .tool-high-contrast .view-cube-face:focus-visible { background: #fff; color: #000; }
+.tool-high-contrast #viewer .form-check-input { background-color: #111; border: 2px solid #fff; }
+.tool-high-contrast #viewer .form-check-input:checked { background-color: #fff; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23000' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e"); }
+.tool-high-contrast #viewer .form-control:focus, .tool-high-contrast #viewer .form-select:focus,
+.tool-high-contrast #viewer .form-check-input:focus { border-color: var(--tool-focus); box-shadow: none; }
+.tool-high-contrast .btn-close { filter: invert(1); opacity: 1; }
+.tool-high-contrast .workspace-home img { background: #FFFFFF; border-radius: 8px; }
+.tool-high-contrast #viewer [aria-invalid="true"], .tool-high-contrast .error-toast { border-color: #FFB4AB; }
+.tool-high-contrast progress { accent-color: #FFFFFF; }
+.tool-high-contrast .form-control:disabled, .tool-high-contrast .form-select:disabled { background-color: #292929 !important; color: #E2E2E2 !important; }
+.tool-high-contrast #viewer pre { background: #111; color: #fff; border-color: #fff; }

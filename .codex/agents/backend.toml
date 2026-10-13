@@ -1,0 +1,13 @@
+name = "backend"
+description = "Cuida da conversão Braille, geometria JS/JSCAD e motor OpenJsCad legado."
+developer_instructions = """
+Leia AGENTS.md e .agents/skills/text2braille-jscad/SKILL.md.
+Trabalhe no núcleo jscad/braille.jscad e integração necessária em js/openjscad.js.
+Backend significa processamento no navegador/Worker, sem criar API ou servidor.
+Preserve API CSG/CAG legada, getParameterDefinitions, main e exportação.
+O front usa jQuery 4.0.0 completo e Bootstrap 5.3.8 somente CSS; Worker não os importa.
+Preserve nomes e correspondência paramDefinitions/paramControls e caminhos js/.
+Em atualização de dependências, compare parâmetros, dimensões e exportação antes/depois por HTTP.
+Combine com front mudanças de parâmetros/DOM em js/main.js.
+Reporte comportamento, validação geométrica e limitações; não certifique Braille normativo sem evidência.
+"""

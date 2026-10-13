@@ -432,6 +432,135 @@ OpenJsCad.checkResult = function(result) {
 
 // convert the result to a compact binary representation, to be copied from the webworker to the main thread.
 // it is assumed that checkResult() has been called already so the data is valid.
+// The legacy CSG X3D writer constructs a malformed DOCTYPE in current browsers.
+// Keep the vendored library intact and serialize the same polygons with explicit units.
+OpenJsCad.exportPlateX3D = function(solid) {
+  var coordinates=[], groups=Object.create(null);
+  solid.fixTJunctions().polygons.forEach(function(polygon) {
+    var color=polygon.shared.color || [0.2,0.2,0.2];
+    if(color.length!==3 || !color.every(function(n){return isFinite(n);})) throw new Error('Cor inválida no modelo X3D.');
+    var key=color.join(' '), indices=[];
+    if(!groups[key]) groups[key]=[];
+    polygon.vertices.forEach(function(vertex) {
+      var point=[vertex.pos.x,vertex.pos.y,vertex.pos.z];
+      if(!point.every(function(n){return isFinite(n);})) throw new Error('Coordenada inválida no modelo X3D.');
+      indices.push(coordinates.length); coordinates.push(point.join(' '));
+    });
+    groups[key].push(indices.join(' ')+' -1');
+  });
+  var first=true, shapes=Object.keys(groups).map(function(color) {
+    var coordinate=first ? '<Coordinate DEF="plate-coordinates" point="'+coordinates.join(' ')+'"/>' : '<Coordinate USE="plate-coordinates"/>';
+    first=false;
+    return '<Shape><Appearance><Material diffuseColor="'+color+'"/></Appearance><IndexedFaceSet solid="true" coordIndex="'+groups[color].join(' ')+'">'+coordinate+'</IndexedFaceSet></Shape>';
+  }).join('');
+  return new Blob(['<?xml version="1.0" encoding="UTF-8"?><X3D profile="Interchange" version="3.3"><head><unit category="length" name="millimeter" conversionFactor="0.001"/></head><Scene>'+shapes+'</Scene></X3D>'],{type:'model/x3d+xml'});
+};
+
+// Local 3MF Core writer with Bambu multipart metadata. ZIP STORE avoids a runtime ZIP dependency.
+// Resources use millimeters and shared coordinates; the build contains one assembly.
+OpenJsCad.exportPlate3MF = function(parts, colors) {
+  var defaults = {base: '#FFFFFF', text: '#222222', dots: '#333333'};
+  colors = colors || defaults;
+  parts = parts.filter(function(part) { return part.data.polygons.length > 0; });
+  if(!parts.length) throw new Error('Não há geometria para exportar.');
+  function escapeXml(value) {
+    return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  }
+  function mesh(solid) {
+    solid = solid.fixTJunctions();
+    var vertices = [], triangles = [], index = Object.create(null);
+    function vertex(v) {
+      var coords = [v.pos.x, v.pos.y, v.pos.z].map(function(n) {
+        if(!isFinite(n)) throw new Error('Coordenada inválida no modelo.');
+        return Math.abs(n) < 1e-9 ? 0 : Number(n.toFixed(9));
+      });
+      var key = coords.join(',');
+      if(index[key] === undefined) { index[key] = vertices.length; vertices.push(coords); }
+      return index[key];
+    }
+    solid.polygons.forEach(function(p) {
+      // A centroid fan preserves collinear boundary vertices introduced by fixTJunctions.
+      var center = new CSG.Vector3D(0, 0, 0);
+      p.vertices.forEach(function(v) { center = center.plus(v.pos); });
+      center = center.dividedBy(p.vertices.length);
+      var a = vertex({pos: center});
+      for(var i=0; i<p.vertices.length; i++) {
+        var b = vertex(p.vertices[i]), c = vertex(p.vertices[(i+1)%p.vertices.length]);
+        var va = new CSG.Vector3D(vertices[a]), vb = new CSG.Vector3D(vertices[b]), vc = new CSG.Vector3D(vertices[c]);
+        if(vb.minus(va).cross(vc.minus(va)).length() > 1e-12) triangles.push([a,b,c]);
+      }
+    });
+    return '<mesh><vertices>' + vertices.map(function(v) {
+      return '<vertex x="'+v[0]+'" y="'+v[1]+'" z="'+v[2]+'"/>';
+    }).join('') + '</vertices><triangles>' + triangles.map(function(t) {
+      return '<triangle v1="'+t[0]+'" v2="'+t[1]+'" v3="'+t[2]+'"/>';
+    }).join('') + '</triangles></mesh>';
+  }
+  var materials = '<basematerials id="1">', palette = [], filamentIndices = [];
+  parts.forEach(function(part) {
+    var color = colors[part.name] || defaults[part.name] || defaults.base;
+    if(!/^#[0-9a-f]{6}$/i.test(color)) throw new Error('Cor inválida: '+color);
+    color = color.toUpperCase();
+    var filamentIndex = palette.indexOf(color);
+    if(filamentIndex < 0) { filamentIndex = palette.length; palette.push(color); }
+    filamentIndices.push(filamentIndex+1);
+    materials += '<base name="'+escapeXml(part.name)+'" displaycolor="'+color.toUpperCase()+'FF"/>';
+  });
+  materials += '</basematerials>';
+  var resources = materials, components = '';
+  parts.forEach(function(part, i) {
+    var id = i+2;
+    resources += '<object id="'+id+'" type="model" name="'+escapeXml(part.name)+'" pid="1" pindex="'+i+'">'+mesh(part.data)+'</object>';
+    components += '<component objectid="'+id+'"/>';
+  });
+  var assembly = parts.length+2;
+  resources += '<object id="'+assembly+'" type="model" name="Placa Braille"><components>'+components+'</components></object>';
+  // Bambu Studio imports Core basematerials as geometry without per-volume filaments.
+  // Its native metadata links mesh object IDs to part names and 1-based filament slots.
+  var modelSettings = '<?xml version="1.0" encoding="UTF-8"?><config><object id="'+assembly+'"><metadata key="name" value="Placa Braille"/><metadata key="extruder" value="1"/>';
+  parts.forEach(function(part, i) {
+    modelSettings += '<part id="'+(i+2)+'" subtype="normal_part"><metadata key="name" value="'+escapeXml(part.name)+'"/><metadata key="extruder" value="'+filamentIndices[i]+'"/></part>';
+  });
+  modelSettings += '</object></config>';
+  // Palette only: printer, material profiles, slicing parameters and AMS mapping remain user choices.
+  var projectSettings = JSON.stringify({filament_colour: palette, filament_settings_id: palette.map(function() { return ''; })});
+  var model = '<?xml version="1.0" encoding="UTF-8"?><model unit="millimeter" xml:lang="pt-BR" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02"><metadata name="Application">Text2Braille3d</metadata><resources>'+resources+'</resources><build><item objectid="'+assembly+'"/></build></model>';
+  var files = [
+    {name: '[Content_Types].xml', content: '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/><Default Extension="config" ContentType="application/octet-stream"/></Types>'},
+    {name: '_rels/.rels', content: '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>'},
+    {name: '3D/3dmodel.model', content: model},
+    {name: 'Metadata/model_settings.config', content: modelSettings},
+    {name: 'Metadata/project_settings.config', content: projectSettings}
+  ];
+  var encoder = new TextEncoder(), chunks = [], central = [], offset = 0;
+  function crc32(data) {
+    var crc = -1;
+    for(var i=0; i<data.length; i++) {
+      crc ^= data[i];
+      for(var bit=0; bit<8; bit++) crc = (crc>>>1) ^ ((crc&1) ? 0xEDB88320 : 0);
+    }
+    return (crc ^ -1)>>>0;
+  }
+  files.forEach(function(file) {
+    var name = encoder.encode(file.name), data = encoder.encode(file.content), crc = crc32(data);
+    var local = new Uint8Array(30+name.length), lv = new DataView(local.buffer);
+    lv.setUint32(0,0x04034b50,true); lv.setUint16(4,20,true); lv.setUint16(6,0x800,true);
+    lv.setUint16(12,33,true); lv.setUint32(14,crc,true); lv.setUint32(18,data.length,true);
+    lv.setUint32(22,data.length,true); lv.setUint16(26,name.length,true); local.set(name,30);
+    var directory = new Uint8Array(46+name.length), dv = new DataView(directory.buffer);
+    dv.setUint32(0,0x02014b50,true); dv.setUint16(4,20,true); dv.setUint16(6,20,true);
+    dv.setUint16(8,0x800,true); dv.setUint16(14,33,true); dv.setUint32(16,crc,true);
+    dv.setUint32(20,data.length,true); dv.setUint32(24,data.length,true);
+    dv.setUint16(28,name.length,true); dv.setUint32(42,offset,true); directory.set(name,46);
+    chunks.push(local,data); central.push(directory); offset += local.length+data.length;
+  });
+  var centralSize = central.reduce(function(n,c) { return n+c.length; },0);
+  var end = new Uint8Array(22), ev = new DataView(end.buffer);
+  ev.setUint32(0,0x06054b50,true); ev.setUint16(8,files.length,true); ev.setUint16(10,files.length,true);
+  ev.setUint32(12,centralSize,true); ev.setUint32(16,offset,true);
+  return new Blob(chunks.concat(central,[end]), {type: 'model/3mf'});
+};
+
 OpenJsCad.resultToCompactBinary = function(resultin) {
   var resultout;
   if(resultin instanceof Array)
@@ -445,6 +574,12 @@ OpenJsCad.resultToCompactBinary = function(resultin) {
   else
   {
     resultout=resultin.toCompactBinary();
+    if(resultin.plateInfo) resultout.plateInfo = resultin.plateInfo;
+    if(resultin.parts) {
+      resultout.parts=resultin.parts.map(function(part) {
+        return {name: part.name, data: part.data.toCompactBinary()};
+      });
+    }
   }
   return resultout;
 };
@@ -465,6 +600,12 @@ OpenJsCad.resultFromCompactBinary = function(resultin) {
     {
       throw new Error("Cannot parse result");
     }
+    if(r.parts) {
+      result.parts=r.parts.map(function(part) {
+        return {name: part.name, data: fromCompactBinary(part.data)};
+      });
+    }
+    if(r.plateInfo) result.plateInfo = r.plateInfo;
     return result;   
   }
   var resultout;
@@ -840,6 +981,7 @@ OpenJsCad.Processor.prototype = {
   },
 
   setRenderedObjects: function(obj) {
+    this.plateParts = obj && obj.parts ? obj.parts : null;
     // if obj is a single CSG or CAG, convert to the array format:
     if(obj === null) 
     {
@@ -914,6 +1056,9 @@ OpenJsCad.Processor.prototype = {
       option.appendChild(document.createTextNode(that.formatInfo(format).displayName));
       that.formatDropdown.options.add(option);
     });
+    if(this.currentFormat && this.supportedFormatsForCurrentObject().indexOf(this.currentFormat) !== -1) {
+      this.formatDropdown.value = this.currentFormat;
+    }
     
     this.updateDownloadLink();
   },
@@ -1156,11 +1301,13 @@ OpenJsCad.Processor.prototype = {
     {
       try
       {
-        this.generateOutputFileFileSystem();
+        // Blob URLs avoid asynchronous failures and stale links from the deprecated FileSystem API.
+        this.generateOutputFileBlobUrl();
       }
       catch(e)
       {
-        this.generateOutputFileBlobUrl();
+        this.clearOutputFile();
+        this.setError('Não foi possível exportar: '+e.message);
       }
     }
   },
@@ -1174,7 +1321,10 @@ OpenJsCad.Processor.prototype = {
       blob=this.currentObject.fixTJunctions().toStlBinary();
     }
     else if(format == "x3d") {
-      blob=this.currentObject.fixTJunctions().toX3D(bb);
+      blob=OpenJsCad.exportPlateX3D(this.currentObject);
+    }
+    else if(format == "3mf") {
+      blob=OpenJsCad.exportPlate3MF(this.plateParts || [{name: 'base', data: this.currentObject}], this.exportColors);
     }
     else if(format == "dxf")
     {
@@ -1189,7 +1339,7 @@ OpenJsCad.Processor.prototype = {
   
   supportedFormatsForCurrentObject: function() {
     if (this.currentObject instanceof CSG) {
-      return ["stl", "x3d"];
+      return ["stl", "3mf", "x3d"];
     } else if (this.currentObject instanceof CAG) {
       return ["dxf"];
     } else {
@@ -1208,6 +1358,11 @@ OpenJsCad.Processor.prototype = {
         displayName: "X3D",
         extension: "x3d",
         mimetype: "model/x3d+xml",
+        },
+      '3mf': {
+        displayName: "3MF",
+        extension: "3mf",
+        mimetype: "model/3mf",
         },
       dxf: {
         displayName: "DXF",

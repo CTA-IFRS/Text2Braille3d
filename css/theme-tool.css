@@ -1,0 +1,72 @@
+/* Tool theme shares the website palette and local fonts. */
+:root {
+    --tool-primary: #5D2F60;
+    --tool-hover: #402841;
+    --tool-focus: #7E4083;
+    --tool-soft: #dfdfdf;
+    --tool-background: #F8F9FA;
+    --tool-surface: #FFFFFF;
+    --tool-text: #212529;
+    --tool-muted: #495057;
+    --tool-border: #DEE2E6;
+    --tool-shadow: 0 5px 20px #40284122;
+}
+body { font-family: 'Nunito', sans-serif; color: var(--tool-text); background: var(--tool-background); }
+h1, h2, h3, .panel-toggle { font-family: 'Atkinson Hyperlegible', sans-serif; }
+button, input, select, textarea { font-family: inherit; }
+a { color: var(--tool-primary); }
+a:hover { color: var(--tool-hover); }
+.workspace-toolbar, .floating-window, .tutorial-toast, .zoom-slider-control, .generation-progress, .error-toast {
+    background: var(--tool-surface); color: var(--tool-text); border-color: var(--tool-border); box-shadow: var(--tool-shadow);
+}
+.workspace-toolbar { padding: 10px 16px; }
+.workspace-home { color: var(--tool-primary); font-family: 'Atkinson Hyperlegible', sans-serif; font-weight: 700; }
+.floating-window, .tutorial-toast, .zoom-slider-control, .generation-progress { border-radius: 16px; }
+.configuration-panel { border-color: var(--tool-border); border-radius: 12px; }
+.configuration-group + .configuration-group, .group-divider { border-color: var(--tool-border); }
+.panel-toggle:hover { background: var(--tool-primary); color: #fff; }
+.btn, #viewer .btn {
+    --bs-btn-color: var(--tool-primary); --bs-btn-border-color: var(--tool-primary);
+    --bs-btn-hover-bg: var(--tool-hover); --bs-btn-hover-border-color: var(--tool-hover); --bs-btn-hover-color: #fff;
+    --bs-btn-active-bg: var(--tool-primary); --bs-btn-active-border-color: var(--tool-primary); --bs-btn-active-color: #fff;
+    --bs-btn-disabled-color: var(--tool-muted); --bs-btn-disabled-border-color: var(--tool-border);
+    border-radius: 999px; min-height: 44px; font-weight: 700; box-shadow: 0 3px 8px #40284118;
+}
+.btn-primary, #viewer .btn-primary { --bs-btn-color: #fff; --bs-btn-bg: var(--tool-primary); --bs-btn-disabled-bg: var(--tool-primary); --bs-btn-disabled-color: #fff; }
+.btn[aria-pressed="true"], .workspace-toolbar .btn[aria-expanded="true"] { color: #fff; background: var(--tool-primary); }
+.field-help, .zoom-slider-control output { color: var(--tool-muted); }
+#viewer .form-control, #viewer .form-select { color: var(--tool-text); background-color: var(--tool-surface); border-color: var(--tool-border); }
+#viewer .form-check-input:checked { background-color: var(--tool-primary); border-color: var(--tool-primary); }
+input { accent-color: var(--tool-primary); }
+.form-range::-webkit-slider-thumb { background: var(--tool-primary); }
+.form-range::-moz-range-thumb { background: var(--tool-primary); }
+.form-range::-webkit-slider-runnable-track { background: var(--tool-soft); }
+.form-range::-moz-range-track { background: var(--tool-soft); }
+#viewer .viewer { background: var(--tool-background); }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 3px solid var(--tool-focus); outline-offset: 3px; box-shadow: none;
+}
+.btn:focus-visible, #viewer .btn:focus-visible {
+    outline: 3px solid var(--tool-focus); outline-offset: 3px; box-shadow: none;
+}
+/* Override Bootstrap's blue focus rings without reducing keyboard visibility. */
+#viewer .form-control:focus, #viewer .form-select:focus, #viewer .form-check-input:focus {
+    border-color: var(--tool-focus); box-shadow: none;
+}
+#viewer .form-range:focus::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--tool-focus); }
+#viewer .form-range:focus::-moz-range-thumb { box-shadow: 0 0 0 3px var(--tool-focus); }
+#viewer .form-range::-webkit-slider-thumb:active { background: var(--tool-primary); }
+#viewer .form-range::-moz-range-thumb:active { background: var(--tool-primary); }
+.view-cube-face:hover, .view-cube-face:focus-visible { background: var(--tool-primary); color: #fff; }
+.btn-close { min-width: 44px; min-height: 44px; flex-shrink: 0; background-position: center; }
+.error-toasts { position: fixed; right: 12px; bottom: 12px; width: 360px; max-width: calc(100vw - 24px); z-index: 6; }
+.error-toast { display: flex; gap: 12px; align-items: flex-start; padding: 16px; border: 2px solid #B42318; border-radius: 16px; max-height: calc(100dvh - var(--workspace-overlay-top, 72px) - 24px); overflow: auto; }
+.error-toast p { flex: 1; min-width: 0; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+#tools-window::-webkit-scrollbar-thumb { background: var(--tool-primary); }
+@media (max-width: 575.98px) {
+    .workspace-toolbar { padding: 8px 12px; }
+    .workspace-toolbar nav { width: 100%; }
+    .workspace-toolbar nav .btn { flex: 1 1 auto; white-space: nowrap; overflow-wrap: normal; }
+    .workspace-home img { width: 44px; }
+    .error-toasts { width: calc(100vw - 24px); }
+}

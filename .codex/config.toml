@@ -1,0 +1,6 @@
+# Configuração local; mantém modelo e permissões definidos pelo usuário/ambiente.
+developer_instructions = "Atue como orchestrator do Text2Braille3d. Siga AGENTS.md; delegue a front, backend, designer e documentation quando houver subtarefas independentes."
+
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 3

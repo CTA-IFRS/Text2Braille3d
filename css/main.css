@@ -1,0 +1,49 @@
+body {
+	font: 14px/20px 'Helvetica Neue Light', 'HelveticaNeue-Light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	max-width: 820px;
+	margin: 0 auto;
+	padding: 10px;
+}
+canvas {
+	border: 1px solid black;
+	margin: 0px 8px;
+}
+pre, code {
+	font: 12px/20px Monaco, monospace;
+	border: 1px solid #CCC;
+	border-radius: 3px;
+	background: #F9F9F9;
+	padding: 0 3px;
+	color: #555;
+}
+pre {
+	padding: 10px;
+	width: 100%;
+}
+textarea {
+	font: 12px/20px Monaco, monospace;
+	padding: 5px 8px;
+	width: 300px;
+	height: 100px;
+}
+td {
+	vertical-align: top;
+}
+
+canvas { cursor: move; }
+
+.tutorial-left {
+	width: 49%;
+	display: inline-block;
+}
+
+.tutorial-right {
+	width: 49%;
+	display: inline-block;
+	text-align: right;
+}
+
+h1 span
+{
+	font-size: 2.0em;
+}

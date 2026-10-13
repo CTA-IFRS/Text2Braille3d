@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<link rel="stylesheet" href="css/bootstrap-5.3.8.min.css" type="text/css" />
+		<link rel="stylesheet" href="css/main.css" type="text/css" />
+		<link rel="stylesheet" href="css/openjscad.css" type="text/css" />
+		<link rel="stylesheet" href="css/custom.css" type="text/css" />
+		<link rel="stylesheet" href="css/fonts-website.css" type="text/css" />
+		<link rel="stylesheet" href="css/theme-tool.css" type="text/css" />
+		<link rel="stylesheet" href="css/high-contrast-tool.css" type="text/css" />
+
+		<title>Texto para placa Braille 3D</title>
+	</head>
+
+	<body onload="onload()">
+		<header class="workspace-toolbar">
+			<h1>
+				<a href="index.html" class="workspace-home">
+				<img src="img/logo-text2braille3d.png" width="69" alt="">
+				<span>Text2Braille3D</span>
+				</a>
+			</h1>
+
+			<nav aria-label="Janelas da ferramenta">
+				<button id="tools-toggle" type="button" class="btn btn-outline-secondary" aria-controls="tools-window" aria-expanded="true">Ferramentas</button>
+				<button id="about-toggle" type="button" class="btn btn-outline-secondary" aria-controls="about-window" aria-expanded="false">Sobre</button>
+				<button id="preferences-toggle" type="button" class="btn btn-outline-secondary" aria-controls="preferences-window" aria-expanded="false">Configurações</button>
+			</nav>
+		</header>
+
+		<section id="about-window" class="floating-window about-window" aria-labelledby="about-heading" hidden>
+			<h2 id="about-heading">Sobre</h2>
+
+			<div class="modal-body">
+				<p class="lead-text">A ferramenta Text2Braille3D permite gerar modelos 3D de placa de sinalização em Braille para posteriormente serem impressas em uma impressora 3D. Para a geração da placa será necessário fornecer o texto que se deseja converter para Braille e configurar os parâmetros para geração do modelo 3D.</p>
+				<ul>
+					<li class="base-text">
+						O Projeto original pode ser encontrado em: <a href="https://github.com/v01pe/Text2Braille3d">https://github.com/v01pe/Text2Braille3d (link externo)</a>
+					</li>
+					<li class="base-text">
+						A licença original pode ser encontrada em: <a href="https://github.com/CTA-IFRS/Text2Braille3d/blob/gh-pages/LICENSE">https://github.com/CTA-IFRS/Text2Braille3d/blob/gh-pages/LICENSE (link externo)</a>
+					</li>
+					<li class="base-text">
+						O Projeto do POALab com a tradução do alemão para português pode ser encontrado em: <a href="https://www.poalab.net.br/t2b/">https://www.poalab.net.br/t2b/ (link externo)</a>
+					</li>
+				</ul>
+			</div>
+
+			<div class="modal-footer row">
+				<a class="col-sm-6" href="https://cta.ifrs.edu.br">
+					<img class="img-fluid" src="img/logo-cta.png" alt="Logo do CTA - Centro Tecnológico de Acessibilidade do IFRS" />
+				</a>
+				<a class="col-sm-6" href="https://ifrs.edu.br">
+					<img class="img-fluid" src="img/logo-ifrs.png" alt="Logo do IFRS - Instituto Federal de Educação Ciência e Tecnologia do Rio Grande do Sul" />
+				</a>
+			</div>
+		</section>
+
+		<section id="preferences-window" class="floating-window preferences-window" aria-labelledby="preferences-heading" hidden>
+			<h2 id="preferences-heading">Configurações</h2>
+			<p id="contrast-help" class="field-help">Alterna entre o tema claro e o tema escuro de alto contraste. A preferência fica salva neste navegador.</p>
+
+			<button id="contrast-toggle" type="button" class="btn btn-outline-secondary" aria-pressed="false" aria-describedby="contrast-help">Alto contraste</button>
+		</section>
+
+		<div id="error-toasts" class="error-toasts" aria-label="Avisos de erro"></div>
+		
+		<main id="viewer" aria-label="Gerador de placas Braille"></main>
+		
+		<aside id="tutorial-toast" class="tutorial-toast" aria-label="Tutorial de impressão 3D">
+			<a href="https://drive.google.com/file/d/1IWFulWs4U3aXDutet2T7sLcc1oiayMGT/view?usp=sharing" target="_blank" rel="noopener noreferrer">Tutorial para impressão 3D de placas de sinalização em Braille<span class="visually-hidden"> (abre em nova aba)</span></a>
+			<button type="button" class="btn-close" aria-label="Fechar aviso do tutorial"></button>
+		</aside>
+
+		<script type="text/javascript" src="js/lightgl.js"></script>
+		<script type="text/javascript" src="js/csg.js"></script>
+		<script type="text/javascript" src="js/openjscad.js"></script>
+		<script type="text/javascript" src="jscad/braille.jscad" charset="utf-8"></script>
+		<script type="text/javascript" src="js/jquery-4.0.0.min.js"></script>
+		<script type="text/javascript" src="js/main.js"></script>
+
+		<!-- Global site tag (gtag.js) - Google Analytics -->
+		<script async src="https://www.googletagmanager.com/gtag/js?id=G-HNH48QK9VB"></script>
+		<script src="js/analytics.js"></script>
+	</body>
+</html>

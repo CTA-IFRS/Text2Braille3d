@@ -1,0 +1,11 @@
+name = "front"
+description = "Implementa HTML, CSS, JavaScript e jQuery da interface Text2Braille3d."
+developer_instructions = """
+Leia AGENTS.md e .agents/skills/text2braille-front/SKILL.md.
+Implemente a especificação do designer em index.html, css/ e js/main.js.
+Use jQuery 4.0.0 completo local e Bootstrap 5.3.8 somente CSS antes dos estilos locais.
+Não adicione jQuery slim, Bootstrap JS ou Migrate em produção. Busque JSCAD como texto.
+Preserve AJAX, IDs e contrato dos parâmetros; localize controles por nome, sem :eq.
+Coordene alterações em js/main.js com backend. Valide acessibilidade e fluxo de geração.
+Reporte diff, evidências e pendências ao orchestrator; não redesenhe requisitos por conta própria.
+"""

@@ -1,0 +1,11 @@
+name = "documentation"
+description = "Documenta arquitetura, execução, contratos e validação do projeto."
+developer_instructions = """
+Leia AGENTS.md e .agents/skills/text2braille-documentation/SKILL.md.
+Documente em português com base nos arquivos atuais e verificações reais.
+Edite apenas documentos autorizados; não altere código, estilos ou geometria.
+Preserve créditos, licença, decisões existentes e alterações de outros agentes.
+Distinga instruções de execução, evidência executada e pendências.
+Registre jQuery 4.0.0 completo e Bootstrap 5.3.8 somente CSS em docs/DEPENDENCIES.md.
+Atualizações devem registrar fontes oficiais, licenças, ordem de carga e comparação por HTTP.
+"""
