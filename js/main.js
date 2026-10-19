@@ -1,16 +1,19 @@
 var gProcessor = null;
 var parameterControls = {};
 var parameterRows = {};
+var configurationPanels = {};
 var generationTimer = null;
 var generationProgress;
 var modelDirty = false;
-var panelBodies = [];
 var colorFields = {};
 var colorsHeading;
 var resetButton;
 var initialExportFormat;
 var defaultExportColors = {base: '#e6d9b8', text: '#222222', dots: '#204fba'};
 var contrastEnabled = false;
+var referenceCornerPreference = null;
+var referenceCornerTemporarilySuppressed = false;
+var originalScrewEdgeLimits = null;
 
 // Present errors in accessible toasts instead of the legacy alert handler.
 window.addEventListener('error', function (event) {
@@ -447,11 +450,11 @@ function adaptViewCube() {
     synchronize();
 }
 
-function createPanel(title, index) {
-    var $section = $('<section class="configuration-panel">').appendTo(gProcessor.parametersdiv);
+function createConfigurationPanel(title, id, expanded) {
+    var $section = $('<section class="configuration-panel">');
     var $heading = $('<h2>');
-    var $button = $('<button type="button" class="panel-toggle">').text(title).attr({id: 'panel-toggle-' + index, 'aria-expanded': String(index === 0), 'aria-controls': 'panel-body-' + index});
-    var $body = $('<div class="panel-body">').attr({id: 'panel-body-' + index, role: 'region', 'aria-labelledby': 'panel-toggle-' + index}).prop('hidden', index !== 0);
+    var $button = $('<button type="button" class="panel-toggle">').text(title).attr({id: 'panel-toggle-' + id, 'aria-expanded': String(expanded), 'aria-controls': 'panel-body-' + id});
+    var $body = $('<div class="panel-body">').attr({id: 'panel-body-' + id, role: 'region', 'aria-labelledby': 'panel-toggle-' + id}).prop('hidden', !expanded);
     $heading.append($button).appendTo($section);
     $body.appendTo($section);
     $button.on('click', function () {
@@ -460,12 +463,12 @@ function createPanel(title, index) {
         $body.prop('hidden', closing);
         $(this).attr('aria-expanded', String(!closing));
     });
-    panelBodies[index] = $body;
+    gProcessor.parametersdiv.appendChild($section[0]);
     return $body;
 }
 
 function adaptParameterControls() {
-    ['Texto e Braille', 'Placa e fixação', 'Exportação e cores'].forEach(createPanel);
+    var $quickControls = $('<section class="quick-controls" aria-label="Controles principais">').prependTo(gProcessor.parametersdiv);
     gProcessor.paramDefinitions.forEach(function (definition, index) {
         var control = gProcessor.paramControls[index];
         control.name = definition.name;
@@ -504,39 +507,47 @@ function adaptParameterControls() {
         if (definition.visible === false) $field.prop('hidden', true);
         parameterRows[definition.name] = $field;
     });
-    var subgroups = [
-        [['Informação', ['text', 'upper']], ['Texto visual', ['visual_text', 'letter_size', 'letter_relief', 'letter_align', 'letter_gap']], ['Pontos Braille', ['dot_height', 'dot_diameter']]],
-        [['Placa', ['plate_margin', 'plate_thickness']], ['Chaveiro', ['ear_enabled', 'ear_side', 'ear_position', 'ear_width', 'ear_height', 'ear_hole', 'ear_thickness', 'ear_overlap', 'ear_chamfer_enabled', 'ear_chamfer', 'ear_joint_chamfer_enabled', 'ear_joint_chamfer']], ['Parafusos', ['screws_enabled', 'screw_size', 'screw_clearance', 'screw_count', 'screw_edge', 'screw_head', 'screw_head_diameter', 'screw_head_depth']], ['Orientação e impressão', ['reference_corner', 'stands']]]
-    ];
-    subgroups.forEach(function (sections, index) {
-        sections.forEach(function (section) {
-            var $group = $('<section class="configuration-group">').appendTo(panelBodies[index]);
-            $('<h3>').text(section[0]).appendTo($group);
-            section[1].forEach(function (name) { if (parameterRows[name]) $group.append(parameterRows[name]); });
-        });
+    ['text', 'visual_text', 'screws_enabled', 'ear_enabled'].forEach(function (name) {
+        if (parameterRows[name]) $quickControls.append(parameterRows[name]);
     });
-    Object.keys(parameterRows).forEach(function (name) {
-        if (!parameterRows[name].parent().length) panelBodies[0].append(parameterRows[name]);
+    var panelSpecs = [
+        ['Braille', 'braille', ['dot_height', 'dot_diameter']],
+        ['Texto', 'text', ['upper', 'letter_size', 'letter_relief', 'letter_align', 'letter_gap']],
+        ['Placa', 'plate', ['plate_margin', 'plate_thickness', 'reference_corner', 'stands']],
+        ['Furos', 'holes', ['screw_count', 'screw_layout', 'screw_size', 'screw_clearance', 'screw_edge', 'screw_head', 'screw_head_diameter', 'screw_head_depth']],
+        ['Chaveiro', 'keychain', ['ear_side', 'ear_position', 'ear_width', 'ear_height', 'ear_hole', 'ear_thickness', 'ear_overlap', 'ear_chamfer_enabled', 'ear_chamfer', 'ear_joint_chamfer_enabled', 'ear_joint_chamfer']],
+        ['Cor e exportação', 'color-export', []]
+    ];
+    panelSpecs.forEach(function (spec, index) {
+        var $body = createConfigurationPanel(spec[0], spec[1], index === 0);
+        configurationPanels[spec[1]] = $body;
+        if (spec[1] === 'color-export') {
+            $('<h3>').text('Formato').appendTo($body);
+            $('<label for="export-format">Formato de exportação</label>').appendTo($body);
+            $body.append(gProcessor.formatDropdown);
+            $('<p class="field-help" role="note">STL: geometria de uma cor. 3MF: cores por parte; a atribuição de filamentos depende do fatiador.</p>').appendTo($body);
+        } else {
+            spec[2].forEach(function (name) { if (parameterRows[name]) $body.append(parameterRows[name]); });
+        }
     });
     $(gProcessor.parameterstable).hide();
-    $('<p class="field-help">Maiúscula mantém o tratamento de maiúsculas no Braille e transforma também o texto visual em maiúsculas. Ao desmarcar, o texto visual volta ao texto digitado.</p>').insertAfter(parameterRows.upper);
-    $('<p class="field-help">Margem adicional ao conteúdo, em mm. Zero preserva os recuos internos das células Braille.</p>').insertAfter(parameterRows.plate_margin);
-    $('<p class="field-help">Os alojamentos usam a espessura da placa definida acima. Informe as medidas da cabeça do seu parafuso; M2/M3/M4/M5/M6 indicam somente o diâmetro nominal.</p>').insertAfter(parameterRows.screws_enabled);
+    $('<p class="field-help" role="note">Maiúscula mantém o tratamento de maiúsculas no Braille e transforma também o texto visual em maiúsculas. Ao desmarcar, o texto visual volta ao texto digitado.</p>').insertAfter(parameterRows.upper);
+    $('<p class="field-help" role="note">Margem adicional ao conteúdo, em mm. Zero preserva os recuos internos das células Braille.</p>').insertAfter(parameterRows.plate_margin);
+    $('<p class="field-help" role="note">Os alojamentos usam a espessura da placa definida acima. Informe as medidas da cabeça do seu parafuso; M2/M3/M4/M5/M6 indicam somente o diâmetro nominal.</p>').insertAfter(parameterRows.screw_head);
     if (parameterRows.screw_edge) {
         parameterRows.screw_edge.find('label').text('Distância do centro dos furos à borda (mm)');
-        $('<p id="screw-edge-help" class="field-help">Medida da borda da placa ao centro do furo. A distância até a parede do furo depende também do seu diâmetro.</p>').insertAfter(parameterRows.screw_edge);
+        $('<p id="screw-edge-help" class="field-help" role="note">A distância pode ser ajustada dentro da faixa segura definida pelo tamanho do furo e pela margem da placa.</p>').insertAfter(parameterRows.screw_edge);
         parameterControls.screw_edge.setAttribute('aria-describedby', 'parameter-screw_edge-value screw-edge-help');
+        originalScrewEdgeLimits = {min: parameterControls.screw_edge.min, max: parameterControls.screw_edge.max};
     }
-    $('<p class="field-help">Canto de referência para orientação da placa. Apoios são destinados à impressão e integram a base exportada.</p>').appendTo(panelBodies[1]);
-    $('<h3>').text('Formato').appendTo(panelBodies[2]);
-    $('<label for="export-format">Formato de exportação</label>').appendTo(panelBodies[2]);
-    panelBodies[2].append(gProcessor.formatDropdown);
-    $('<p class="field-help">STL: geometria de uma cor. 3MF: cores por parte; a atribuição de filamentos depende do fatiador.</p>').appendTo(panelBodies[2]);
-    colorsHeading = $('<h3 class="group-divider">').text('Cores').appendTo(panelBodies[2]);
+    $('<p class="field-help" role="note">Canto de referência para orientação da placa. Apoios são destinados à impressão e integram a base exportada.</p>').appendTo(configurationPanels.plate);
+    $('<p id="reference-corner-status" class="field-help" role="status" aria-live="polite" hidden></p>').insertAfter(parameterRows.screw_layout);
+    parameterControls.reference_corner.setAttribute('aria-describedby', 'reference-corner-status');
+    colorsHeading = $('<h3 class="group-divider">').text('Cores').appendTo(configurationPanels['color-export']);
     initialExportFormat = gProcessor.formatDropdown.value || 'stl';
     gProcessor.exportColors = Object.assign({}, defaultExportColors);
     [['base', 'Base'], ['text', 'Texto visual'], ['dots', 'Pontos Braille']].forEach(function (entry) {
-        var $row = $('<div class="color-field">').appendTo(panelBodies[2]);
+        var $row = $('<div class="color-field">').appendTo(configurationPanels['color-export']);
         $('<label>').attr('for', 'color-' + entry[0]).text(entry[1]).appendTo($row);
         var $input = $('<input type="color">').attr('id', 'color-' + entry[0]).val(gProcessor.exportColors[entry[0]]).appendTo($row);
         var $value = $('<output>').attr('for', $input.attr('id')).text($input.val()).appendTo($row);
@@ -551,11 +562,134 @@ function adaptParameterControls() {
         });
     });
     $(gProcessor.parametersdiv).on('input change', '[data-parameter] input, [data-parameter] select, [data-parameter] textarea', function (event) {
-        this.removeAttribute('aria-invalid');
+        if (this.name === 'screw_count') updateScrewLayoutOptions();
+        if (['plate_margin', 'screw_edge', 'screw_size', 'screw_clearance', 'screw_head', 'screw_head_diameter', 'screws_enabled'].indexOf(this.name) !== -1) {
+            updateScrewConstraintLimits();
+        }
+        if (this.name === 'reference_corner' && event.type === 'change') referenceCornerPreference = this.checked;
+        if ((['screws_enabled', 'screw_count', 'screw_layout', 'plate_margin', 'screw_edge', 'screw_size', 'screw_clearance', 'screw_head', 'screw_head_diameter'].indexOf(this.name) !== -1) || (this.name === 'reference_corner' && event.type === 'change')) {
+            updateReferenceCornerCompatibility();
+        }
+        if (!this.validity.customError) this.removeAttribute('aria-invalid');
         if (event.type === 'input') markModelDirty();
         else scheduleGeneration(0);
     });
+    updateScrewLayoutOptions();
+    updateScrewConstraintLimits();
+    referenceCornerPreference = !!parameterControls.reference_corner.checked;
+    updateReferenceCornerCompatibility();
     updateConditionalControls();
+}
+
+function updateScrewLayoutOptions() {
+    var count = parameterControls.screw_count;
+    var layout = parameterControls.screw_layout;
+    if (!count || !layout) return;
+    var presets = String(count.value) === '4'
+        ? [['corners', 'Cantos']]
+        : [
+            ['top', 'Superior'],
+            ['center', 'Meio'],
+            ['bottom', 'Inferior'],
+            ['diagonal_left', 'Diagonal esquerda'],
+            ['diagonal_right', 'Diagonal direita']
+        ];
+    var current = layout.value;
+    layout.replaceChildren.apply(layout, presets.map(function (preset) {
+        var option = document.createElement('option');
+        option.value = preset[0];
+        option.textContent = preset[1];
+        return option;
+    }));
+    if (presets.some(function (preset) { return preset[0] === current; })) layout.value = current;
+    else layout.value = String(count.value) === '4' ? 'corners' : 'diagonal_left';
+}
+
+function screwEffectiveRadius() {
+    var size = parameterControls.screw_size;
+    var clearance = parameterControls.screw_clearance;
+    var head = parameterControls.screw_head;
+    var headDiameter = parameterControls.screw_head_diameter;
+    var nominalDiameter = parseFloat(size && String(size.value).slice(1)) || 3;
+    var holeRadius = (nominalDiameter + (parseFloat(clearance && clearance.value) || 0)) / 2;
+    var headRadius = head && head.value !== 'none' ? (parseFloat(headDiameter && headDiameter.value) || 0) / 2 : 0;
+    return Math.max(holeRadius, headRadius);
+}
+
+function updateScrewConstraintLimits() {
+    var margin = parameterControls.plate_margin;
+    var edge = parameterControls.screw_edge;
+    var help = document.getElementById('screw-edge-help');
+    var enabled = parameterControls.screws_enabled && parameterControls.screws_enabled.checked;
+    if (!margin || !edge || !originalScrewEdgeLimits) return;
+    edge.setCustomValidity('');
+    if (!enabled) {
+        edge.min = originalScrewEdgeLimits.min;
+        edge.max = originalScrewEdgeLimits.max;
+        edge.removeAttribute('aria-invalid');
+        if (help) help.textContent = 'A distância pode ser ajustada dentro da faixa segura definida pelo tamanho do furo e pela margem da placa.';
+        updateControlValueDisplay(edge);
+        return;
+    }
+
+    var effectiveRadius = screwEffectiveRadius();
+    var safetyInset = Math.ceil((effectiveRadius + 0.5) * 10 - 1e-8) / 10;
+    var edgeMin = Math.max(Number(originalScrewEdgeLimits.min) || 0.5, Math.ceil((effectiveRadius + 0.1) * 10 - 1e-8) / 10);
+    var edgeMaxLimit = Number(originalScrewEdgeLimits.max) || 100;
+    var marginMax = Number(margin.max) || 100;
+    var minimumMargin = edgeMin + safetyInset;
+    var impossibleByMargin = minimumMargin > marginMax;
+    var marginWasRaised = !impossibleByMargin && Number(margin.value) < minimumMargin;
+    if (marginWasRaised) margin.value = String(minimumMargin);
+
+    var edgeMax = Math.min(edgeMaxLimit, Number(margin.value) - safetyInset);
+    var impossible = impossibleByMargin || edgeMin > edgeMax;
+    if (impossible) {
+        edge.min = originalScrewEdgeLimits.min;
+        edge.max = originalScrewEdgeLimits.max;
+        edge.setCustomValidity('A margem máxima não permite uma faixa segura para este parafuso e alojamento.');
+        edge.setAttribute('aria-invalid', 'true');
+        if (help) help.textContent = 'Não há faixa segura para esta combinação dentro dos limites da placa. Reduza o diâmetro/folga/cabeça do parafuso.';
+    } else {
+        edge.min = String(edgeMin);
+        edge.max = String(edgeMax);
+        var edgeValue = Number(edge.value);
+        edge.value = String(Math.min(edgeMax, Math.max(edgeMin, edgeValue)));
+        edge.removeAttribute('aria-invalid');
+        if (help) help.textContent = 'Faixa segura: ' + edgeMin.toFixed(1) + ' a ' + edgeMax.toFixed(1) + ' mm. A distância permanece independente da margem dentro desses limites.' + (marginWasRaised ? ' A margem foi elevada para comportar a folga mínima.' : '');
+    }
+    [margin, edge].forEach(function (control) {
+        updateControlValueDisplay(control);
+    });
+}
+
+function updateControlValueDisplay(control) {
+    if (!control) return;
+    var definition = gProcessor.paramDefinitions.find(function (entry) { return entry.name === control.name; });
+    var unit = definition && /position/.test(definition.name) ? '' : ' mm';
+    var output = document.getElementById(control.id + '-value');
+    if (output) output.textContent = control.value + unit;
+    if (control.type === 'range') control.setAttribute('aria-valuetext', control.value + unit);
+}
+
+function updateReferenceCornerCompatibility() {
+    var corner = parameterControls.reference_corner;
+    var screws = parameterControls.screws_enabled;
+    var layout = parameterControls.screw_layout;
+    if (!corner || !screws || !layout) return;
+    if (referenceCornerPreference === null) referenceCornerPreference = corner.checked;
+    var conflictsWithTopLeft = ['top', 'diagonal_left', 'corners'].indexOf(layout.value) !== -1;
+    var shouldSuppress = !!screws.checked && referenceCornerPreference && conflictsWithTopLeft;
+    if (shouldSuppress) corner.checked = false;
+    else corner.checked = referenceCornerPreference;
+    referenceCornerTemporarilySuppressed = shouldSuppress;
+    var message = document.getElementById('reference-corner-status');
+    if (message) {
+        message.hidden = !shouldSuppress;
+        message.textContent = shouldSuppress
+            ? 'Canto de referência desativado temporariamente: ele colide com o furo superior esquerdo nesta posição. A preferência será restaurada ao escolher outra posição ou desativar os furos.'
+            : '';
+    }
 }
 
 function updatePreviewColors() {
@@ -600,6 +734,10 @@ function resetConfiguration() {
     gProcessor.currentFormat = initialExportFormat;
     gProcessor.formatDropdown.value = initialExportFormat;
     gProcessor.setError('');
+    updateScrewLayoutOptions();
+    updateScrewConstraintLimits();
+    referenceCornerPreference = !!parameterControls.reference_corner.checked;
+    updateReferenceCornerCompatibility();
     updateConditionalControls();
     scheduleGeneration(0);
 }
@@ -624,13 +762,20 @@ function scheduleGeneration(delay) {
 function updateConditionalControls() {
     var busy = gProcessor.processing || generationTimer !== null;
     function enabled(name) { return parameterControls[name] && parameterControls[name].checked; }
+    [['holes', 'screws_enabled'], ['keychain', 'ear_enabled']].forEach(function (entry) {
+        var $panel = configurationPanels[entry[0]] && configurationPanels[entry[0]].closest('.configuration-panel');
+        if (!$panel || !$panel.length) return;
+        var visible = !!enabled(entry[1]);
+        if (!visible && $panel[0].contains(document.activeElement)) parameterControls[entry[1]].focus();
+        $panel.prop('hidden', !visible);
+    });
     Object.keys(parameterControls).forEach(function (name) {
         var conditional = /^letter_/.test(name) ? enabled('visual_text') : /^ear_/.test(name) && name !== 'ear_enabled' ? enabled('ear_enabled') : /^screw_/.test(name) ? enabled('screws_enabled') : null;
         if (name === 'ear_chamfer') conditional = conditional && enabled('ear_chamfer_enabled');
         if (name === 'ear_joint_chamfer') conditional = conditional && enabled('ear_joint_chamfer_enabled');
         if (name === 'screw_head_diameter' || name === 'screw_head_depth') conditional = conditional && parameterControls.screw_head && parameterControls.screw_head.value !== 'none';
         parameterControls[name].dataset.inactive = String(conditional === false);
-        parameterControls[name].disabled = busy || conditional === false;
+        parameterControls[name].disabled = busy || conditional === false || (name === 'reference_corner' && referenceCornerTemporarilySuppressed);
         if (conditional !== null) {
             var row = parameterRows[name];
             if (!conditional && row[0].contains(document.activeElement)) {

@@ -463,6 +463,7 @@ function plateFeatureDefinitions() {
 		{name:'screw_size',caption:'Diâmetro nominal',type:'choice',values:['M2','M3','M4','M5','M6'],captions:['M2 (2 mm)','M3 (3 mm)','M4 (4 mm)','M5 (5 mm)','M6 (6 mm)'],initial:'M3'},
 		{name:'screw_clearance',caption:'Folga diametral do furo (mm)',type:'float',initial:0.4},
 		{name:'screw_count',caption:'Quantidade de furos',type:'choice',values:['2','4'],captions:['2: diagonais opostas','4: quatro cantos'],initial:'2'},
+		{name:'screw_layout',caption:'Posi\u00e7\u00e3o dos furos',type:'choice',values:['top','center','bottom','diagonal_left','diagonal_right','corners'],captions:['Superior','Centro das laterais','Inferior','Diagonal esquerda','Diagonal direita','Quatro cantos'],initial:'diagonal_left'},
 		{name:'screw_edge',caption:'Centro dos furos até as bordas (mm)',type:'float',initial:5},
 		{name:'screw_head',caption:'Alojamento da cabeça',type:'choice',values:['none','counterbore','countersink'],captions:['Sem alojamento','Rebaixo cilíndrico','Escareado'],initial:'none'},
 		{name:'screw_head_diameter',caption:'Diâmetro da cabeça (mm)',type:'float',initial:6},
@@ -497,7 +498,8 @@ function validatePlateParameters() {
 		if (parameters.ear_hole >= Math.min(parameters.ear_width,parameters.ear_height)-1) throw new Error('ear_hole: o furo precisa manter parede maior que 0,5 mm.');
 	}
 	if (parameters.screws_enabled) {
-		if (['M2','M3','M4','M5','M6'].indexOf(parameters.screw_size)<0 || ['2','4'].indexOf(String(parameters.screw_count))<0) throw new Error('Escolha M2, M3, M4, M5 ou M6 e 2/4 furos.');
+		var screwCount=String(parameters.screw_count), screwLayouts=screwCount==='4'?['corners']:['top','center','bottom','diagonal_left','diagonal_right'];
+		if (['M2','M3','M4','M5','M6'].indexOf(parameters.screw_size)<0 || ['2','4'].indexOf(screwCount)<0 || screwLayouts.indexOf(parameters.screw_layout)<0) throw new Error('Escolha M2, M3, M4, M5 ou M6, 2/4 furos e uma posi\u00e7\u00e3o compat\u00edvel com a quantidade.');
 		requireRange('screw_clearance',0,3); requireRange('screw_edge',0.5,100);
 		if (['none','counterbore','countersink'].indexOf(parameters.screw_head)<0) throw new Error('Alojamento inválido.');
 		if (parameters.screw_head!=='none') {
@@ -616,8 +618,22 @@ function composePlate(cells,lines,dots) {
 		var edge=parameters.screw_edge, r=(Number(parameters.screw_size.slice(1))+parameters.screw_clearance)/2;
 		var hr=parameters.screw_head==='none'?r:parameters.screw_head_diameter/2;
 		if(edge<=hr || width<=2*edge+2*hr || height<=2*edge+2*hr) throw new Error('screw_edge: furos sem parede positiva ou placa pequena; ajuste distância às bordas/margens.');
-		var centers=[[edge,-edge],[width-edge,-height+edge]];
-		if(String(parameters.screw_count)==='4') centers.push([width-edge,-edge],[edge,-height+edge]);
+		var centers, layout=parameters.screw_layout;
+		// screw_edge sets the distance from each hole center to its nearest plate edge.
+		if(layout==='center') {
+			centers=[[edge,-height/2],[width-edge,-height/2]];
+		} else if(layout==='top') {
+			centers=[[edge,-edge],[width-edge,-edge]];
+		} else if(layout==='bottom') {
+			centers=[[edge,-height+edge],[width-edge,-height+edge]];
+		} else if(layout==='diagonal_right') {
+			centers=[[width-edge,-edge],[edge,-height+edge]];
+		} else if(layout==='corners') {
+			centers=[[edge,-edge],[width-edge,-edge],[width-edge,-height+edge],[edge,-height+edge]];
+		} else { // diagonal_left; mant\u00e9m as coordenadas anteriores.
+			centers=[[edge,-edge],[width-edge,-height+edge]];
+		}
+
 		centers.forEach(function(c) {
 			var keepout=CSG.cylinder({start:[c[0],c[1],-parameters.plate_thickness-1],end:[c[0],c[1],10],radius:hr,resolution:parameters.resolution});
 			if(keepout.intersect(content).polygons.length) throw new Error('screw_edge: furo invade texto/Braille; aumente plate_margin ou ajuste distância às bordas.');

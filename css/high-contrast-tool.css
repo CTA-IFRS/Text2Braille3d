@@ -19,6 +19,7 @@
 .tool-high-contrast .btn-primary, .tool-high-contrast #viewer .btn-primary,
 .tool-high-contrast .btn[aria-pressed="true"], .tool-high-contrast .workspace-toolbar .btn[aria-expanded="true"] { color: #111; --bs-btn-color: #111; --bs-btn-disabled-color: #111; }
 .tool-high-contrast .panel-toggle, .tool-high-contrast .view-cube-face { background: #111; color: #fff; border-color: #fff; }
+.tool-high-contrast .field-help { background: #111; color: #fff; border-color: #fff; }
 .tool-high-contrast .panel-toggle:hover, .tool-high-contrast .view-cube-face:hover, .tool-high-contrast .view-cube-face:focus-visible { background: #fff; color: #000; }
 .tool-high-contrast #viewer .form-check-input { background-color: #111; border: 2px solid #fff; }
 .tool-high-contrast #viewer .form-check-input:checked { background-color: #fff; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23000' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e"); }

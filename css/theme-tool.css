@@ -23,6 +23,8 @@ a:hover { color: var(--tool-hover); }
 .workspace-home { color: var(--tool-primary); font-family: 'Atkinson Hyperlegible', sans-serif; font-weight: 700; }
 .floating-window, .tutorial-toast, .zoom-slider-control, .generation-progress { border-radius: 16px; }
 .configuration-panel { border-color: var(--tool-border); border-radius: 12px; }
+.quick-controls { border-color: var(--tool-border); background: var(--tool-surface); }
+.field-help { border-color: var(--tool-border); background: #f1f3f5; }
 .configuration-group + .configuration-group, .group-divider { border-color: var(--tool-border); }
 .panel-toggle:hover { background: var(--tool-primary); color: #fff; }
 .btn, #viewer .btn {
